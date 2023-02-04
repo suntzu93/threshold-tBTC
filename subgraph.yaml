@@ -1,0 +1,113 @@
+specVersion: 0.0.1
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Bridge
+    network: goerli
+    source:
+      address: "0xF179A47fF9A3bee28ac434099dB4582485E46769"
+      abi: Bridge
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - DepositParametersUpdated
+        - DepositRevealed
+        - DepositsSwept
+        - FraudChallengeDefeatTimedOut
+        - FraudChallengeDefeated
+        - FraudChallengeSubmitted
+        - FraudParametersUpdated
+        - GovernanceTransferred
+        - Initialized
+        - MovedFundsSweepTimedOut
+        - MovedFundsSwept
+        - MovingFundsBelowDustReported
+        - MovingFundsCommitmentSubmitted
+        - MovingFundsCompleted
+        - MovingFundsParametersUpdated
+        - MovingFundsTimedOut
+        - MovingFundsTimeoutReset
+        - NewWalletRegistered
+        - NewWalletRequested
+        - RedemptionParametersUpdated
+        - RedemptionRequested
+        - RedemptionTimedOut
+        - RedemptionsCompleted
+        - SpvMaintainerStatusUpdated
+        - TreasuryUpdated
+        - VaultStatusUpdated
+        - WalletClosed
+        - WalletClosing
+        - WalletMovingFunds
+        - WalletParametersUpdated
+        - WalletTerminated
+      abis:
+        - name: Bridge
+          file: ./abis/Bridge.json
+      eventHandlers:
+        - event: DepositParametersUpdated(uint64,uint64,uint64,uint32)
+          handler: handleDepositParametersUpdated
+        - event: DepositRevealed(bytes32,uint32,indexed address,uint64,bytes8,indexed bytes20,bytes20,bytes4,address)
+          handler: handleDepositRevealed
+        - event: DepositsSwept(bytes20,bytes32)
+          handler: handleDepositsSwept
+        - event: FraudChallengeDefeatTimedOut(indexed bytes20,bytes32)
+          handler: handleFraudChallengeDefeatTimedOut
+        - event: FraudChallengeDefeated(indexed bytes20,bytes32)
+          handler: handleFraudChallengeDefeated
+        - event: FraudChallengeSubmitted(indexed bytes20,bytes32,uint8,bytes32,bytes32)
+          handler: handleFraudChallengeSubmitted
+        - event: FraudParametersUpdated(uint96,uint32,uint96,uint32)
+          handler: handleFraudParametersUpdated
+        - event: GovernanceTransferred(address,address)
+          handler: handleGovernanceTransferred
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: MovedFundsSweepTimedOut(indexed bytes20,bytes32,uint32)
+          handler: handleMovedFundsSweepTimedOut
+        - event: MovedFundsSwept(indexed bytes20,bytes32)
+          handler: handleMovedFundsSwept
+        - event: MovingFundsBelowDustReported(indexed bytes20)
+          handler: handleMovingFundsBelowDustReported
+        - event: MovingFundsCommitmentSubmitted(indexed bytes20,bytes20[],address)
+          handler: handleMovingFundsCommitmentSubmitted
+        - event: MovingFundsCompleted(indexed bytes20,bytes32)
+          handler: handleMovingFundsCompleted
+        - event: MovingFundsParametersUpdated(uint64,uint64,uint32,uint32,uint96,uint32,uint16,uint64,uint32,uint96,uint32)
+          handler: handleMovingFundsParametersUpdated
+        - event: MovingFundsTimedOut(indexed bytes20)
+          handler: handleMovingFundsTimedOut
+        - event: MovingFundsTimeoutReset(indexed bytes20)
+          handler: handleMovingFundsTimeoutReset
+        - event: NewWalletRegistered(indexed bytes32,indexed bytes20)
+          handler: handleNewWalletRegistered
+        - event: NewWalletRequested()
+          handler: handleNewWalletRequested
+        - event: RedemptionParametersUpdated(uint64,uint64,uint64,uint64,uint32,uint96,uint32)
+          handler: handleRedemptionParametersUpdated
+        - event: RedemptionRequested(indexed bytes20,bytes,indexed address,uint64,uint64,uint64)
+          handler: handleRedemptionRequested
+        - event: RedemptionTimedOut(indexed bytes20,bytes)
+          handler: handleRedemptionTimedOut
+        - event: RedemptionsCompleted(indexed bytes20,bytes32)
+          handler: handleRedemptionsCompleted
+        - event: SpvMaintainerStatusUpdated(indexed address,bool)
+          handler: handleSpvMaintainerStatusUpdated
+        - event: TreasuryUpdated(address)
+          handler: handleTreasuryUpdated
+        - event: VaultStatusUpdated(indexed address,bool)
+          handler: handleVaultStatusUpdated
+        - event: WalletClosed(indexed bytes32,indexed bytes20)
+          handler: handleWalletClosed
+        - event: WalletClosing(indexed bytes32,indexed bytes20)
+          handler: handleWalletClosing
+        - event: WalletMovingFunds(indexed bytes32,indexed bytes20)
+          handler: handleWalletMovingFunds
+        - event: WalletParametersUpdated(uint32,uint64,uint64,uint64,uint32,uint64,uint32)
+          handler: handleWalletParametersUpdated
+        - event: WalletTerminated(indexed bytes32,indexed bytes20)
+          handler: handleWalletTerminated
+      file: ./src/mapping.ts
