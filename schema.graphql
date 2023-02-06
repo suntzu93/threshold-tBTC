@@ -1,6 +1,68 @@
-type ExampleEntity @entity {
-  id: ID!
-  count: BigInt!
-  depositDustThreshold: BigInt! # uint64
-  depositTreasuryFeeDivisor: BigInt! # uint64
+enum DepositStatus {
+  REVEALED #-> bridge.revealDeposit() / DepositRevealed event
+  SWEPT # -> bridge.submitDepositSweepProof() / DepositSwept event && bank.increaseBalances() / BalanceIncreased event
+  COMPLETED
+  CANCEL # -> Guardian cancel , The optimistic minting request for the given deposit exis or The optimistic minting request for the given deposit has not been finalized yet.
+  REFUNDED # -> ???
+}
+
+enum RedemptionStatus {
+  REQUESTED #-> bridge.requestRedemption() / RedemptionRequested event && bank.transferBalanceFrom() / BalanceTransferred event
+  COMPLETED #-> bridge.submitRedemptionProof() / RedemptionCompleted event && bank.DecreaseBalance() / BalanceDecreased event && bank.trasferBalance() / BalanceTransferred event
+  TIMEDOUT #-> bridge.notifyRedemptionTimeout() / RedemptionTimedOut
+}
+
+type Transaction @entity {
+  id: Bytes!
+  txHash: Bytes!
+  timestamp: BigInt!
+  from: Bytes!
+  to: Bytes
+  amount: BigInt
+  description: String
+  deposit: [Deposit!] @derivedFrom(field: "transactions")
+  redemption: [Redemption!] @derivedFrom(field: "transactions")
+}
+
+type User @entity {
+  id: Bytes!
+  mintingDebt: BigInt!
+  deposit: [Deposit!] @derivedFrom(field: "user")
+  redemption: [Redemption!] @derivedFrom(field: "user")
+}
+
+type Deposit @entity {
+  id: Bytes! #keccak256(fundingTxHash|fundingOutputIndex)
+  status: DepositStatus
+  user: User!
+  amount: BigInt!
+  newDebt: BigInt!
+  actualAmountReceived: BigInt!
+  treasuryFee: BigInt!
+  walletPubKeyHash: Bytes
+  fundingTxHash: Bytes
+  fundingOutputIndex: BigInt
+  blindingFactor: Bytes
+  refundPubKeyHash: Bytes
+  refundLocktime: Bytes
+  vault: Bytes
+  transactions: [Transaction!]! 
+  depositTimestamp: BigInt
+  updateTimestamp: BigInt
+}
+
+type Redemption @entity {
+  id: Bytes! #keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash)
+  status: RedemptionStatus
+  user: User!
+  amount: BigInt!
+  walletPubKeyHash: Bytes
+  redeemerOutputScript: Bytes
+  redemptionTxHash: Bytes
+  treasuryFee: BigInt
+  txMaxFee: BigInt
+  completedTxHash: Bytes
+  transactions: [Transaction!]!
+  redemptionTimestamp: BigInt
+  updateTimestamp: BigInt
 }

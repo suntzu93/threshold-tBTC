@@ -1,4 +1,4 @@
-specVersion: 0.0.1
+specVersion: 0.0.5
 schema:
   file: ./schema.graphql
 dataSources:
@@ -6,51 +6,24 @@ dataSources:
     name: Bridge
     network: goerli
     source:
-      address: "0xF179A47fF9A3bee28ac434099dB4582485E46769"
       abi: Bridge
+      address: "0x0Cad3257C4B7ec6de1f6926Fbf5714255a6632c3"
+      startBlock: 8364954
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
-        - DepositParametersUpdated
-        - DepositRevealed
-        - DepositsSwept
-        - FraudChallengeDefeatTimedOut
-        - FraudChallengeDefeated
-        - FraudChallengeSubmitted
-        - FraudParametersUpdated
-        - GovernanceTransferred
-        - Initialized
-        - MovedFundsSweepTimedOut
-        - MovedFundsSwept
-        - MovingFundsBelowDustReported
-        - MovingFundsCommitmentSubmitted
-        - MovingFundsCompleted
-        - MovingFundsParametersUpdated
-        - MovingFundsTimedOut
-        - MovingFundsTimeoutReset
-        - NewWalletRegistered
-        - NewWalletRequested
-        - RedemptionParametersUpdated
-        - RedemptionRequested
-        - RedemptionTimedOut
-        - RedemptionsCompleted
-        - SpvMaintainerStatusUpdated
-        - TreasuryUpdated
-        - VaultStatusUpdated
-        - WalletClosed
-        - WalletClosing
-        - WalletMovingFunds
-        - WalletParametersUpdated
-        - WalletTerminated
+        - Deposit
+        - Redemption
       abis:
         - name: Bridge
           file: ./abis/Bridge.json
       eventHandlers:
         - event: DepositParametersUpdated(uint64,uint64,uint64,uint32)
           handler: handleDepositParametersUpdated
-        - event: DepositRevealed(bytes32,uint32,indexed address,uint64,bytes8,indexed bytes20,bytes20,bytes4,address)
+        - event: DepositRevealed(bytes32,uint32,indexed address,uint64,bytes8,indexed
+            bytes20,bytes20,bytes4,address)
           handler: handleDepositRevealed
         - event: DepositsSwept(bytes20,bytes32)
           handler: handleDepositsSwept
@@ -88,7 +61,8 @@ dataSources:
           handler: handleNewWalletRequested
         - event: RedemptionParametersUpdated(uint64,uint64,uint64,uint64,uint32,uint96,uint32)
           handler: handleRedemptionParametersUpdated
-        - event: RedemptionRequested(indexed bytes20,bytes,indexed address,uint64,uint64,uint64)
+        - event: RedemptionRequested(indexed bytes20,bytes,indexed
+            address,uint64,uint64,uint64)
           handler: handleRedemptionRequested
         - event: RedemptionTimedOut(indexed bytes20,bytes)
           handler: handleRedemptionTimedOut
@@ -110,4 +84,67 @@ dataSources:
           handler: handleWalletParametersUpdated
         - event: WalletTerminated(indexed bytes32,indexed bytes20)
           handler: handleWalletTerminated
-      file: ./src/mapping.ts
+      callHandlers:
+        - function: requestRedemption(bytes20,(bytes32,uint32,uint64),bytes,uint64)
+          handler: callHandleRequestRedemption
+        - function: submitDepositSweepProof((bytes4,bytes,bytes,bytes4),(bytes,uint256,bytes),(bytes32,uint32,uint64),address)
+          handler: callHandleSubmitDepositSweepProof
+      file: ./src/bridge.ts
+  - kind: ethereum
+    name: TBTCVault
+    network: goerli
+    source:
+      abi: TBTCVault
+      address: "0x65eB0562FCe858f8328858c76E689aBedB78621F"
+      startBlock: 8364960
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Deposit
+      abis:
+        - name: TBTCVault
+          file: ./abis/TBTCVault.json
+      eventHandlers:
+        - event: GuardianAdded(indexed address)
+          handler: handleGuardianAdded
+        - event: GuardianRemoved(indexed address)
+          handler: handleGuardianRemoved
+        - event: Minted(indexed address,uint256)
+          handler: handleMinted
+        - event: MinterAdded(indexed address)
+          handler: handleMinterAdded
+        - event: MinterRemoved(indexed address)
+          handler: handleMinterRemoved
+        - event: OptimisticMintingCancelled(indexed address,indexed uint256)
+          handler: handleOptimisticMintingCancelled
+        - event: OptimisticMintingDebtRepaid(indexed address,uint256)
+          handler: handleOptimisticMintingDebtRepaid
+        - event: OptimisticMintingDelayUpdateStarted(uint32)
+          handler: handleOptimisticMintingDelayUpdateStarted
+        - event: OptimisticMintingDelayUpdated(uint32)
+          handler: handleOptimisticMintingDelayUpdated
+        - event: OptimisticMintingFeeUpdateStarted(uint32)
+          handler: handleOptimisticMintingFeeUpdateStarted
+        - event: OptimisticMintingFeeUpdated(uint32)
+          handler: handleOptimisticMintingFeeUpdated
+        - event: OptimisticMintingFinalized(indexed address,indexed uint256,indexed
+            address,uint256)
+          handler: handleOptimisticMintingFinalized
+        - event: OptimisticMintingPaused()
+          handler: handleOptimisticMintingPaused
+        - event: OptimisticMintingRequested(indexed address,indexed uint256,indexed
+            address,uint256,bytes32,uint32)
+          handler: handleOptimisticMintingRequested
+        - event: OptimisticMintingUnpaused()
+          handler: handleOptimisticMintingUnpaused
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Unminted(indexed address,uint256)
+          handler: handleUnminted
+        - event: UpgradeFinalized(address)
+          handler: handleUpgradeFinalized
+        - event: UpgradeInitiated(address,uint256)
+          handler: handleUpgradeInitiated
+      file: ./src/tBTCVault.ts

@@ -1,7 +1,22 @@
 {
   "goerli": {
     "Bridge": {
-      "address": "0xF179A47fF9A3bee28ac434099dB4582485E46769"
+      "address": "0x0Cad3257C4B7ec6de1f6926Fbf5714255a6632c3",
+      "startBlock": 8364954
+    },
+    "TBTCVault": {
+      "address": "0x65eB0562FCe858f8328858c76E689aBedB78621F",
+      "startBlock": 8364960
+    }
+  },
+  "mainnet":{
+    "Bridge": {
+      "address": "0x5e4861a80B55f035D899f66772117F00FA0E8e7B",
+      "startBlock": 16397413
+    },
+    "TBTCVault": {
+      "address": "0x9C070027cdC9dc8F82416B2e5314E11DFb4FE3CD",
+      "startBlock": 16472741
     }
   }
 }
