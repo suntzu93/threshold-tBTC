@@ -20,15 +20,18 @@ type Transaction @entity {
   to: Bytes
   amount: BigInt
   description: String
-  deposit: [Deposit!] @derivedFrom(field: "transactions")
-  redemption: [Redemption!] @derivedFrom(field: "transactions")
+  deposits: [Deposit!] @derivedFrom(field: "transactions")
+  redemptions: [Redemption!] @derivedFrom(field: "transactions")
 }
 
 type User @entity {
   id: Bytes!
   mintingDebt: BigInt!
-  deposit: [Deposit!] @derivedFrom(field: "user")
-  redemption: [Redemption!] @derivedFrom(field: "user")
+  tokenBalance: BigInt!
+  totalTokensHeld: BigInt!
+  tbtcToken : TBTCToken!
+  deposits: [Deposit!] @derivedFrom(field: "user")
+  redemptions: [Redemption!] @derivedFrom(field: "user")
 }
 
 type Deposit @entity {
@@ -65,4 +68,18 @@ type Redemption @entity {
   transactions: [Transaction!]!
   redemptionTimestamp: BigInt
   updateTimestamp: BigInt
+}
+
+
+type TBTCToken @entity{
+  id: ID!
+  name: String!
+  symbol: String!
+  decimals: Int!
+  address: Bytes!
+  totalSupply: BigInt!
+  totalMint: BigInt!
+  totalBurn: BigInt!
+  currentTokenHolders: BigInt!
+  holders: [User!] @derivedFrom(field: "tbtcToken")
 }

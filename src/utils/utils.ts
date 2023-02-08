@@ -1,10 +1,9 @@
 import {BigDecimal, BigInt, ByteArray, Bytes} from '@graphprotocol/graph-ts'
 import {crypto} from '@graphprotocol/graph-ts'
 
-// Calculates deposit key the same way as the Bridge contract.
-// The deposit key is computed as
-// `keccak256(fundingTxHash | fundingOutputIndex)`.
-
+/** Calculates deposit key the same way as the Bridge contract.
+ The deposit key is computed as
+ `keccak256(fundingTxHash | fundingOutputIndex)`.*/
 export function calculateDepositKey(
     fundingTxHash: Uint8Array,
     fundingOutputIndex: i32
@@ -29,7 +28,9 @@ export function calculateDepositKey(
     return hashArray;
 }
 
-// keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash)
+/**
+ * keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash)
+ * */
 export function calculateRedemptionKey(redeemerOutputScript: ByteArray, walletPublicKeyHash: ByteArray): ByteArray {
     let scriptHashArray = crypto.keccak256(redeemerOutputScript);
     let data = new Uint8Array(scriptHashArray.length + walletPublicKeyHash.length);
@@ -71,7 +72,7 @@ export function hexToBigint(hex: string): BigInt {
 
 export function createZeroString(length: i32): string {
     let zeroString = '';
-    for (let i = 0;i < length ; i++){
+    for (let i = 0; i < length; i++) {
         zeroString += '0';
     }
     return zeroString;

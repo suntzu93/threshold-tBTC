@@ -1,4 +1,3 @@
-import {BigInt} from "@graphprotocol/graph-ts"
 import {
     Bridge,
     DepositParametersUpdated,
@@ -37,8 +36,7 @@ import {
 } from "../generated/Bridge/Bridge"
 
 
-import {log, ByteArray, Bytes} from '@graphprotocol/graph-ts'
-import {crypto} from '@graphprotocol/graph-ts'
+import {log, Bytes} from '@graphprotocol/graph-ts'
 import {getOrCreateDeposit, getOrCreateRedemption, getOrCreateTransaction, getOrCreateUser} from "./utils/helper"
 import * as Utils from "./utils/utils"
 

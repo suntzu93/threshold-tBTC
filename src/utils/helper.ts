@@ -1,18 +1,8 @@
-import { Address, BigInt, Bytes } from '@graphprotocol/graph-ts';
-import { Deposit, Redemption, Transaction ,User} from "../../generated/schema"
+import {Address, BigInt, Bytes} from '@graphprotocol/graph-ts';
+import {Deposit, Redemption, Transaction, User, TBTCToken} from "../../generated/schema"
 import * as constants from "./constants"
+import {ADDRESS_TBTC} from "./constants";
 
-// export enum DepositStatus {
-//     REVEALED = "REVEALED",
-//     SWEPT = "SWEPT",
-//     REFUNDED = "REFUNDED"
-// }
-
-// export enum RedemptionStatus {
-//     REQUESTED = "REQUESTED",
-//     COMPLETED = "COMPLETED",
-//     TIMEDOUT = "TIMEDOUT"
-// }
 
 export function getOrCreateTransaction(id: Bytes): Transaction {
     let transaction = Transaction.load(id);
@@ -28,6 +18,8 @@ export function getOrCreateUser(id: Bytes): User {
     if (!user) {
         user = new User(id)
         user.mintingDebt = constants.ZERO_BI
+        user.tokenBalance = constants.ZERO_BI;
+        user.totalTokensHeld = constants.ZERO_BI;
     }
     return user;
 }
@@ -56,4 +48,23 @@ export function getOrCreateRedemption(id: Bytes): Redemption {
         redemption.transactions = []
     }
     return redemption;
+}
+
+
+export function getOrCreateTbtcToken(): TBTCToken {
+    let tBtcToken = TBTCToken.load("TBTCToken");
+
+    if (tBtcToken == null) {
+        tBtcToken = new TBTCToken("TBTCToken");
+        tBtcToken.decimals = 18;
+        tBtcToken.name = "tBTC v2";
+        tBtcToken.symbol = "tBTC";
+        tBtcToken.totalSupply = constants.ZERO_BI;
+        tBtcToken.totalMint = constants.ZERO_BI;
+        tBtcToken.totalBurn = constants.ZERO_BI;
+        tBtcToken.address = constants.ADDRESS_TBTC;
+        tBtcToken.currentTokenHolders = constants.ZERO_BI;
+    }
+
+    return tBtcToken as TBTCToken;
 }
