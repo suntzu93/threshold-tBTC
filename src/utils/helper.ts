@@ -20,6 +20,7 @@ export function getOrCreateUser(id: Bytes): User {
         user.mintingDebt = constants.ZERO_BI
         user.tokenBalance = constants.ZERO_BI;
         user.totalTokensHeld = constants.ZERO_BI;
+        user.tbtcToken = getOrCreateTbtcToken().id;
     }
     return user;
 }

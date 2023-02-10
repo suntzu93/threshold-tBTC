@@ -37,7 +37,13 @@ import {
 
 
 import {log, Bytes} from '@graphprotocol/graph-ts'
-import {getOrCreateDeposit, getOrCreateRedemption, getOrCreateTransaction, getOrCreateUser} from "./utils/helper"
+import {
+    getOrCreateDeposit,
+    getOrCreateRedemption,
+    getOrCreateTbtcToken,
+    getOrCreateTransaction,
+    getOrCreateUser
+} from "./utils/helper"
 import * as Utils from "./utils/utils"
 
 export function handleDepositParametersUpdated(
@@ -65,6 +71,8 @@ export function handleDepositRevealed(event: DepositRevealed): void {
     let depositsContract = bridgeContract.deposits(Utils.hexToBigint(hexWithoutOx));
 
     let user = getOrCreateUser(event.params.depositor)
+    let tBtcToken = getOrCreateTbtcToken();
+    user.tbtcToken = tBtcToken.id;
     user.save()
 
     let deposit = getOrCreateDeposit(Bytes.fromByteArray(id))
