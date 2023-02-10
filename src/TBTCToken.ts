@@ -16,10 +16,15 @@ export function handleTransfer(event: Transfer): void {
 
     let contract = TBTC.bind(event.address)
     tBtcToken.totalSupply = contract.totalSupply();
-
-    if (event.params.from.toHexString() == Const.ADDRESS_ZERO.toHexString()) {
-        //Increase total Mint
-        tBtcToken.totalMint = tBtcToken.totalMint.plus(event.params.value);
+    if (event.params.from.toHex() == Const.ADDRESS_ZERO.toHex()) {
+        //Using to address to check if transaction use TBTCVault or Vending Machine
+        let toAddress = event.transaction.to;
+        if (toAddress) {
+            if (toAddress.toHex() == Const.TBTCVault.toHex()) {
+                //Increase total Mint by TBTCVault
+                tBtcToken.totalMint = tBtcToken.totalMint.plus(event.params.value);
+            }
+        }
     } else {
         let fromHolderPreviousBalance = fromHolder.tokenBalance;
         fromHolder.tokenBalance = fromHolder.tokenBalance.minus(event.params.value);
@@ -33,9 +38,15 @@ export function handleTransfer(event: Transfer): void {
         fromHolder.save();
     }
 
-    if (event.params.to.toHexString() == Const.ADDRESS_ZERO.toHexString()) {
-        //Increase total Burn
-        tBtcToken.totalBurn = tBtcToken.totalBurn.plus(event.params.value);
+    if (event.params.to.toHex() == Const.ADDRESS_ZERO.toHex()) {
+        //Using to address to check if transaction use TBTCVault or Vending Machine
+        let toAddress = event.transaction.to;
+        if (toAddress) {
+            if (toAddress.toHex() == Const.TBTCVault.toHex()) {
+                //Increase total burn by TBTCVault (v2)
+                tBtcToken.totalBurn = tBtcToken.totalBurn.plus(event.params.value);
+            }
+        }
     } else {
         let toHolderPreviousBalance = toHolder.tokenBalance;
         toHolder.tokenBalance = toHolder.tokenBalance.plus(event.params.value);

@@ -1,4 +1,4 @@
-import {BigDecimal, BigInt, ByteArray, Bytes} from '@graphprotocol/graph-ts'
+import {dataSource, BigInt, ByteArray, Bytes} from '@graphprotocol/graph-ts'
 import {crypto} from '@graphprotocol/graph-ts'
 
 /** Calculates deposit key the same way as the Bridge contract.
@@ -53,6 +53,9 @@ export function bytesToUint8Array(bytes: Bytes): Uint8Array {
     return uint8Array;
 }
 
+/**
+ * Convert hex to Bigint. Start from the last character and multiply value with the 16s power.
+ */
 export function hexToBigint(hex: string): BigInt {
     let bigint = BigInt.fromI32(0);
     let power = BigInt.fromI32(1);
@@ -70,6 +73,7 @@ export function hexToBigint(hex: string): BigInt {
     return bigint;
 }
 
+/** creates a string composed of '0's given a length */
 export function createZeroString(length: i32): string {
     let zeroString = '';
     for (let i = 0; i < length; i++) {
@@ -78,5 +82,14 @@ export function createZeroString(length: i32): string {
     return zeroString;
 }
 
-
-  
+export function convertDepositKeyToHex(depositKey: BigInt): string {
+    let depositKeyHex = depositKey.toHexString();
+    //Some cases with length is 65 then convert to bytes will crash
+    //exp : 0x86cc94dc9f76f03160ab4514842b9345b5d063a5b4023fed4efc9a871b06044
+    if (depositKeyHex.length < 66) {
+        let missedNumber = 66 - depositKeyHex.length;
+        let replacement = '0x' + createZeroString(missedNumber);
+        depositKeyHex = depositKeyHex.replace('0x', replacement)
+    }
+    return depositKeyHex
+}

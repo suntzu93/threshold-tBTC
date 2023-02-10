@@ -27,18 +27,6 @@ import * as Utils from "./utils/utils"
 import * as Const from "./utils/constants"
 
 
-function convertDepositKeyToHex(depositKey: BigInt): string {
-    let depositKeyHex = depositKey.toHexString();
-    //Some cases with length is 65 then convert to bytes will crash
-    //exp : 0x86cc94dc9f76f03160ab4514842b9345b5d063a5b4023fed4efc9a871b06044
-    if (depositKeyHex.length < 66) {
-        let missedNumber = 66 - depositKeyHex.length;
-        let replacement = '0x' + Utils.createZeroString(missedNumber);
-        depositKeyHex = depositKeyHex.replace('0x', replacement)
-    }
-    return depositKeyHex
-}
-
 export function handleGuardianAdded(event: GuardianAdded): void {
 }
 
@@ -69,7 +57,7 @@ export function handleOptimisticMintingCancelled(
     transactionEntity.description = `Guardian ${event.params.guardian.toHexString()} canceled`
     transactionEntity.save()
 
-    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(convertDepositKeyToHex(event.params.depositKey)))
+    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(Utils.convertDepositKeyToHex(event.params.depositKey)))
     deposit.status = "CANCEL"
     let transactions = deposit.transactions
     transactions.push(transactionEntity.id)
@@ -106,16 +94,12 @@ export function handleOptimisticMintingFeeUpdated(
 export function handleOptimisticMintingFinalized(
     event: OptimisticMintingFinalized
 ): void {
-    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(convertDepositKeyToHex(event.params.depositKey)));
+    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(Utils.convertDepositKeyToHex(event.params.depositKey)));
     let tBTCVaultContract = TBTCVault.bind(event.address)
 
     let user = Helper.getOrCreateUser(event.params.depositor)
     user.mintingDebt = tBTCVaultContract.optimisticMintingDebt(Address.fromBytes(user.id))
     user.save()
-
-    // 0x00d30fde68fff95d4e5dea9166e50b43002af79da8bef5e64a280fbf9592649f
-    // 0xd30fde68fff95d4e5dea9166e50b43002af79da8bef5e64a280fbf9592649f
-
 
     // Divisor used to compute the treasury fee taken from each
     ///         optimistically minted deposit and transferred to the treasury
@@ -183,7 +167,7 @@ export function handleOptimisticMintingRequested(
     transactionEntity.description = "Minting Requested"
     transactionEntity.save()
 
-    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(convertDepositKeyToHex(event.params.depositKey)));
+    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(Utils.convertDepositKeyToHex(event.params.depositKey)));
     deposit.status = "SWEPT"
     deposit.updateTimestamp = event.block.timestamp
     let transactions = deposit.transactions
