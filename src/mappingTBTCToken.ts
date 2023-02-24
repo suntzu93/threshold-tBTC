@@ -13,9 +13,6 @@ export function handleTransfer(event: Transfer): void {
     let tBtcToken = getOrCreateTbtcToken();
     let fromHolder = getOrCreateUser(event.params.from);
     let toHolder = getOrCreateUser(event.params.to);
-
-    let contract = TBTC.bind(event.address)
-    tBtcToken.totalSupply = contract.totalSupply();
     if (event.params.from.toHex() == Const.ADDRESS_ZERO.toHex()) {
         //Using to address to check if transaction use TBTCVault or Vending Machine
         let toAddress = event.transaction.to;
@@ -25,6 +22,8 @@ export function handleTransfer(event: Transfer): void {
                 tBtcToken.totalMint = tBtcToken.totalMint.plus(event.params.value);
             }
         }
+        let contract = TBTC.bind(event.address)
+        tBtcToken.totalSupply = contract.totalSupply();
     } else {
         let fromHolderPreviousBalance = fromHolder.tokenBalance;
         fromHolder.tokenBalance = fromHolder.tokenBalance.minus(event.params.value);
@@ -47,6 +46,8 @@ export function handleTransfer(event: Transfer): void {
                 tBtcToken.totalBurn = tBtcToken.totalBurn.plus(event.params.value);
             }
         }
+        let contract = TBTC.bind(event.address)
+        tBtcToken.totalSupply = contract.totalSupply();
     } else {
         let toHolderPreviousBalance = toHolder.tokenBalance;
         toHolder.tokenBalance = toHolder.tokenBalance.plus(event.params.value);

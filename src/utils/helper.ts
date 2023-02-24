@@ -1,7 +1,17 @@
-import {Address, BigInt, Bytes} from '@graphprotocol/graph-ts';
-import {Deposit, Redemption, Transaction, User, TBTCToken} from "../../generated/schema"
+import {Address, BigInt, Bytes, ethereum} from '@graphprotocol/graph-ts';
+import {
+    Deposit,
+    Redemption,
+    Transaction,
+    Event,
+    User,
+    TBTCToken,
+    Operator,
+    StatsRecord,
+    StatusRecord
+} from "../../generated/schema"
 import * as constants from "./constants"
-import {ADDRESS_TBTC} from "./constants";
+import {ADDRESS_TBTC, ADDRESS_ZERO} from "./constants";
 
 
 export function getOrCreateTransaction(id: Bytes): Transaction {
@@ -55,7 +65,7 @@ export function getOrCreateRedemption(id: Bytes): Redemption {
 export function getOrCreateTbtcToken(): TBTCToken {
     let tBtcToken = TBTCToken.load("TBTCToken");
 
-    if (tBtcToken == null) {
+    if (!tBtcToken) {
         tBtcToken = new TBTCToken("TBTCToken");
         tBtcToken.decimals = 18;
         tBtcToken.name = "tBTC v2";
@@ -68,4 +78,61 @@ export function getOrCreateTbtcToken(): TBTCToken {
     }
 
     return tBtcToken as TBTCToken;
+}
+
+export function getOrCreateOperatorEvent(event: ethereum.Event, status: string): Event {
+    let eventEntity = Event.load(event.transaction.hash.toHex());
+    if (!eventEntity) {
+        eventEntity = new Event(event.transaction.hash.toHex());
+        eventEntity.from = event.transaction.from;
+        eventEntity.to = event.transaction.to;
+        eventEntity.timestamp = event.block.timestamp;
+        eventEntity.event = status;
+        eventEntity.amount = constants.ZERO_BI;
+    }
+    return eventEntity as Event;
+}
+
+export function getStats(): StatsRecord {
+    let stats = StatsRecord.load("current");
+    if (stats == null) {
+        stats = new StatsRecord("current")
+        stats.numOperators = 0;
+        stats.totalTBTCAuthorizedAmount = constants.ZERO_BI;
+        stats.totalRandomBeaconAuthorizedAmount = constants.ZERO_BI;
+    }
+    return stats as StatsRecord;
+}
+
+export function getStatus(): StatusRecord {
+    let stats = StatusRecord.load("current");
+    if (stats == null) {
+        stats = new StatusRecord("current")
+        stats.currentRequestedRelayEntry = null;
+    }
+    return stats as StatusRecord;
+}
+
+export function getOrCreateOperator(address: Address): Operator {
+    let operator = Operator.load(address.toHexString());
+    if (!operator) {
+        operator = new Operator(address.toHexString());
+        operator.address = constants.ADDRESS_ZERO;
+        operator.stakedAt = constants.ZERO_BI;
+        operator.stakeType = 0;
+        operator.randomBeaconAuthorized = false;
+        operator.tBTCAuthorized = false;
+        operator.tBTCAuthorizedAmount = constants.ZERO_BI;
+        operator.randomBeaconAuthorizedAmount = constants.ZERO_BI;
+        operator.stakedAmount = constants.ZERO_BI;
+        operator.availableReward = constants.ZERO_BI;
+        operator.totalBeaconRewards = constants.ZERO_BI;
+        operator.misbehavedCount = 0;
+        operator.poolRewardBanDuration = constants.ZERO_BI;
+        operator.totalBeaconRewards = constants.ZERO_BI;
+        operator.beaconGroupCount = 0;
+        operator.events = [];
+        operator.groups = [];
+    }
+    return operator as Operator;
 }

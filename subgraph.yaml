@@ -11,7 +11,7 @@ dataSources:
       startBlock: 8364954
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - Deposit
@@ -89,7 +89,7 @@ dataSources:
           handler: callHandleRequestRedemption
         - function: submitDepositSweepProof((bytes4,bytes,bytes,bytes4),(bytes,uint256,bytes),(bytes32,uint32,uint64),address)
           handler: callHandleSubmitDepositSweepProof
-      file: ./src/bridge.ts
+      file: ./src/mappingBridge.ts
   - kind: ethereum
     name: TBTCVault
     network: goerli
@@ -99,7 +99,7 @@ dataSources:
       startBlock: 8364960
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - Deposit
@@ -147,7 +147,7 @@ dataSources:
           handler: handleUpgradeFinalized
         - event: UpgradeInitiated(address,uint256)
           handler: handleUpgradeInitiated
-      file: ./src/tBTCVault.ts
+      file: ./src/mappingTBTCVault.ts
   - kind: ethereum
     name: TBTC
     network: goerli
@@ -157,7 +157,7 @@ dataSources:
       startBlock: 8364943
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - Transfer
@@ -167,4 +167,260 @@ dataSources:
       eventHandlers:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
-      file: ./src/TBTCToken.ts
+      file: ./src/mappingTBTCToken.ts
+  - kind: ethereum
+    name: TokenStaking
+    network: goerli
+    source:
+      abi: TokenStaking
+      address: "0x1da5d88C26EA4f87b5e09C3452eE2384Ee20DC75"
+      startBlock: 7681424
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - ApplicationStatusChanged
+        - AuthorizationCeilingSet
+        - AuthorizationDecreaseApproved
+        - AuthorizationDecreaseRequested
+        - AuthorizationIncreased
+        - AuthorizationInvoluntaryDecreased
+        - DelegateChanged
+        - DelegateVotesChanged
+        - GovernanceTransferred
+        - MinimumStakeAmountSet
+        - NotificationRewardPushed
+        - NotificationRewardSet
+        - NotificationRewardWithdrawn
+        - NotifierRewarded
+        - OwnerRefreshed
+        - PanicButtonSet
+        - SlashingProcessed
+        - StakeDiscrepancyPenaltySet
+        - Staked
+        - TokensSeized
+        - ToppedUp
+        - Unstaked
+      abis:
+        - name: TokenStaking
+          file: ./abis/TokenStaking.json
+      eventHandlers:
+        - event: ApplicationStatusChanged(indexed address,indexed uint8)
+          handler: handleApplicationStatusChanged
+        - event: AuthorizationCeilingSet(uint256)
+          handler: handleAuthorizationCeilingSet
+        - event: AuthorizationDecreaseApproved(indexed address,indexed
+            address,uint96,uint96)
+          handler: handleAuthorizationDecreaseApproved
+        - event: AuthorizationDecreaseRequested(indexed address,indexed
+            address,uint96,uint96)
+          handler: handleAuthorizationDecreaseRequested
+        - event: AuthorizationIncreased(indexed address,indexed address,uint96,uint96)
+          handler: handleAuthorizationIncreased
+        - event: AuthorizationInvoluntaryDecreased(indexed address,indexed
+            address,uint96,uint96,indexed bool)
+          handler: handleAuthorizationInvoluntaryDecreased
+        - event: DelegateChanged(indexed address,indexed address,indexed address)
+          handler: handleDelegateChanged
+        - event: DelegateVotesChanged(indexed address,uint256,uint256)
+          handler: handleDelegateVotesChanged
+        - event: GovernanceTransferred(address,address)
+          handler: handleGovernanceTransferred
+        - event: MinimumStakeAmountSet(uint96)
+          handler: handleMinimumStakeAmountSet
+        - event: NotificationRewardPushed(uint96)
+          handler: handleNotificationRewardPushed
+        - event: NotificationRewardSet(uint96)
+          handler: handleNotificationRewardSet
+        - event: NotificationRewardWithdrawn(address,uint96)
+          handler: handleNotificationRewardWithdrawn
+        - event: NotifierRewarded(indexed address,uint256)
+          handler: handleNotifierRewarded
+        - event: OwnerRefreshed(indexed address,indexed address,indexed address)
+          handler: handleOwnerRefreshed
+        - event: PanicButtonSet(indexed address,indexed address)
+          handler: handlePanicButtonSet
+        - event: SlashingProcessed(indexed address,uint256,uint256)
+          handler: handleSlashingProcessed
+        - event: StakeDiscrepancyPenaltySet(uint96,uint256)
+          handler: handleStakeDiscrepancyPenaltySet
+        - event: Staked(indexed uint8,indexed address,indexed
+            address,address,address,uint96)
+          handler: handleStaked
+        - event: TokensSeized(indexed address,uint96,indexed bool)
+          handler: handleTokensSeized
+        - event: ToppedUp(indexed address,uint96)
+          handler: handleToppedUp
+        - event: Unstaked(indexed address,uint96)
+          handler: handleUnstaked
+      file: ./src/mappingTokenStaking.ts
+  - kind: ethereum
+    name: RandomBeacon
+    network: goerli
+    source:
+      abi: RandomBeacon
+      address: "0xF177CfA720ceC42841c04A458f6c68e1243C1b49"
+      startBlock: 8364724
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - AuthorizationDecreaseApproved
+        - AuthorizationDecreaseRequested
+        - AuthorizationIncreased
+        - AuthorizationParametersUpdated
+        - CallbackFailed
+        - DkgMaliciousResultSlashed
+        - DkgMaliciousResultSlashingFailed
+        - DkgResultApproved
+        - DkgResultChallenged
+        - DkgResultSubmitted
+        - DkgSeedTimedOut
+        - DkgStarted
+        - DkgStateLocked
+        - DkgTimedOut
+        - GasParametersUpdated
+        - GovernanceTransferred
+        - GroupCreationParametersUpdated
+        - GroupRegistered
+        - InactivityClaimed
+        - InvoluntaryAuthorizationDecreaseFailed
+        - OperatorJoinedSortitionPool
+        - OperatorRegistered
+        - OperatorStatusUpdated
+        - ReimbursementPoolUpdated
+        - RelayEntryDelaySlashed
+        - RelayEntryDelaySlashingFailed
+        - RelayEntryParametersUpdated
+        - RelayEntryRequested
+        - RelayEntrySubmitted
+        - RelayEntryTimedOut
+        - RelayEntryTimeoutSlashed
+        - RelayEntryTimeoutSlashingFailed
+        - RequesterAuthorizationUpdated
+        - RewardParametersUpdated
+        - RewardsWithdrawn
+        - SlashingParametersUpdated
+        - UnauthorizedSigningSlashed
+        - UnauthorizedSigningSlashingFailed
+      abis:
+        - name: RandomBeacon
+          file: ./abis/RandomBeacon.json
+      eventHandlers:
+        - event: AuthorizationDecreaseApproved(indexed address)
+          handler: handleAuthorizationDecreaseApproved
+        - event: AuthorizationDecreaseRequested(indexed address,indexed
+            address,uint96,uint96,uint64)
+          handler: handleAuthorizationDecreaseRequested
+        - event: AuthorizationIncreased(indexed address,indexed address,uint96,uint96)
+          handler: handleAuthorizationIncreased
+        - event: AuthorizationParametersUpdated(uint96,uint64,uint64)
+          handler: handleAuthorizationParametersUpdated
+        - event: CallbackFailed(uint256,uint256)
+          handler: handleCallbackFailed
+        - event: DkgMaliciousResultSlashed(indexed bytes32,uint256,address)
+          handler: handleDkgMaliciousResultSlashed
+        - event: DkgMaliciousResultSlashingFailed(indexed bytes32,uint256,address)
+          handler: handleDkgMaliciousResultSlashingFailed
+        - event: DkgResultApproved(indexed bytes32,indexed address)
+          handler: handleDkgResultApproved
+        - event: DkgResultChallenged(indexed bytes32,indexed address,string)
+          handler: handleDkgResultChallenged
+        - event: DkgResultSubmitted(indexed bytes32,indexed
+            uint256,(uint256,bytes,uint8[],bytes,uint256[],uint32[],bytes32))
+          handler: handleDkgResultSubmitted
+        - event: DkgSeedTimedOut()
+          handler: handleDkgSeedTimedOut
+        - event: DkgStarted(indexed uint256)
+          handler: handleDkgStarted
+        - event: DkgStateLocked()
+          handler: handleDkgStateLocked
+        - event: DkgTimedOut()
+          handler: handleDkgTimedOut
+        - event: GasParametersUpdated(uint256,uint256,uint256,uint256)
+          handler: handleGasParametersUpdated
+        - event: GovernanceTransferred(address,address)
+          handler: handleGovernanceTransferred
+        - event: GroupCreationParametersUpdated(uint256,uint256,uint256,uint256,uint256,uint256)
+          handler: handleGroupCreationParametersUpdated
+        - event: GroupRegistered(indexed uint64,indexed bytes)
+          handler: handleGroupRegistered
+        - event: InactivityClaimed(indexed uint64,uint256,address)
+          handler: handleInactivityClaimed
+        - event: InvoluntaryAuthorizationDecreaseFailed(indexed address,indexed
+            address,uint96,uint96)
+          handler: handleInvoluntaryAuthorizationDecreaseFailed
+        - event: OperatorJoinedSortitionPool(indexed address,indexed address)
+          handler: handleOperatorJoinedSortitionPool
+        - event: OperatorRegistered(indexed address,indexed address)
+          handler: handleOperatorRegistered
+        - event: OperatorStatusUpdated(indexed address,indexed address)
+          handler: handleOperatorStatusUpdated
+        - event: ReimbursementPoolUpdated(address)
+          handler: handleReimbursementPoolUpdated
+        - event: RelayEntryDelaySlashed(indexed uint256,uint256,address[])
+          handler: handleRelayEntryDelaySlashed
+        - event: RelayEntryDelaySlashingFailed(indexed uint256,uint256,address[])
+          handler: handleRelayEntryDelaySlashingFailed
+        - event: RelayEntryParametersUpdated(uint256,uint256,uint256)
+          handler: handleRelayEntryParametersUpdated
+        - event: RelayEntryRequested(indexed uint256,uint64,bytes)
+          handler: handleRelayEntryRequested
+        - event: RelayEntrySubmitted(indexed uint256,address,bytes)
+          handler: handleRelayEntrySubmitted
+        - event: RelayEntryTimedOut(indexed uint256,uint64)
+          handler: handleRelayEntryTimedOut
+        - event: RelayEntryTimeoutSlashed(indexed uint256,uint256,address[])
+          handler: handleRelayEntryTimeoutSlashed
+        - event: RelayEntryTimeoutSlashingFailed(indexed uint256,uint256,address[])
+          handler: handleRelayEntryTimeoutSlashingFailed
+        - event: RequesterAuthorizationUpdated(indexed address,bool)
+          handler: handleRequesterAuthorizationUpdated
+        - event: RewardParametersUpdated(uint256,uint256,uint256,uint256)
+          handler: handleRewardParametersUpdated
+        - event: RewardsWithdrawn(indexed address,uint96)
+          handler: handleRewardsWithdrawn
+        - event: SlashingParametersUpdated(uint256,uint256,uint256)
+          handler: handleSlashingParametersUpdated
+        - event: UnauthorizedSigningSlashed(indexed uint64,uint256,address[])
+          handler: handleUnauthorizedSigningSlashed
+        - event: UnauthorizedSigningSlashingFailed(indexed uint64,uint256,address[])
+          handler: handleUnauthorizedSigningSlashingFailed
+      file: ./src/mappingRandomBeacon.ts
+  - kind: ethereum
+    name: SortitionPool
+    network: goerli
+    source:
+      abi: SortitionPool
+      address: "0x3FC63cDBC1fc82F6aDb82d3dEAF7c31723961540"
+      startBlock: 8364710
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - BetaOperatorsAdded
+        - ChaosnetDeactivated
+        - ChaosnetOwnerRoleTransferred
+        - IneligibleForRewards
+        - OwnershipTransferred
+        - RewardEligibilityRestored
+      abis:
+        - name: SortitionPool
+          file: ./abis/SortitionPool.json
+      eventHandlers:
+        - event: BetaOperatorsAdded(address[])
+          handler: handleBetaOperatorsAdded
+        - event: ChaosnetDeactivated()
+          handler: handleChaosnetDeactivated
+        - event: ChaosnetOwnerRoleTransferred(address,address)
+          handler: handleChaosnetOwnerRoleTransferred
+        - event: IneligibleForRewards(uint32[],uint256)
+          handler: handleIneligibleForRewards
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: RewardEligibilityRestored(indexed address,indexed uint32)
+          handler: handleRewardEligibilityRestored
+      file: ./src/mappingSortitionPool.ts

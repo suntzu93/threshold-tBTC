@@ -1,4 +1,4 @@
-import {dataSource, BigInt, ByteArray, Bytes} from '@graphprotocol/graph-ts'
+import {ethereum, BigInt, ByteArray, Bytes, Entity, Value} from '@graphprotocol/graph-ts'
 import {crypto} from '@graphprotocol/graph-ts'
 
 /** Calculates deposit key the same way as the Bridge contract.
@@ -92,4 +92,17 @@ export function convertDepositKeyToHex(depositKey: BigInt): string {
         depositKeyHex = depositKeyHex.replace('0x', replacement)
     }
     return depositKeyHex
+}
+
+export function getIDFromEvent(event: ethereum.Event): string {
+    return event.transaction.hash.toHex() + "-" + event.logIndex.toString()
+}
+
+export function getRelayEntryId(requestId: BigInt): string {
+    return 're_' + requestId.toString()
+}
+
+export function getBeaconGroupId(pubKey: Bytes): string {
+    // Cut off the group pub key, we don't want the ids to to be unreasonably long.
+    return pubKey.toHexString().slice(0, 62)
 }

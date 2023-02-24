@@ -1,85 +1,216 @@
 enum DepositStatus {
-  REVEALED #-> bridge.revealDeposit() / DepositRevealed event
-  SWEPT # -> bridge.submitDepositSweepProof() / DepositSwept event && bank.increaseBalances() / BalanceIncreased event
-  COMPLETED
-  CANCEL # -> Guardian cancel , The optimistic minting request for the given deposit exis or The optimistic minting request for the given deposit has not been finalized yet.
-  REFUNDED # -> ???
+    REVEALED #-> bridge.revealDeposit() / DepositRevealed event
+    SWEPT # -> bridge.submitDepositSweepProof() / DepositSwept event && bank.increaseBalances() / BalanceIncreased event
+    COMPLETED
+    CANCEL # -> Guardian cancel , The optimistic minting request for the given deposit exis or The optimistic minting request for the given deposit has not been finalized yet.
+    REFUNDED # -> ???
 }
 
 enum RedemptionStatus {
-  REQUESTED #-> bridge.requestRedemption() / RedemptionRequested event && bank.transferBalanceFrom() / BalanceTransferred event
-  COMPLETED #-> bridge.submitRedemptionProof() / RedemptionCompleted event && bank.DecreaseBalance() / BalanceDecreased event && bank.trasferBalance() / BalanceTransferred event
-  TIMEDOUT #-> bridge.notifyRedemptionTimeout() / RedemptionTimedOut
+    REQUESTED #-> bridge.requestRedemption() / RedemptionRequested event && bank.transferBalanceFrom() / BalanceTransferred event
+    COMPLETED #-> bridge.submitRedemptionProof() / RedemptionCompleted event && bank.DecreaseBalance() / BalanceDecreased event && bank.trasferBalance() / BalanceTransferred event
+    TIMEDOUT #-> bridge.notifyRedemptionTimeout() / RedemptionTimedOut
 }
 
 type Transaction @entity {
-  id: Bytes!
-  txHash: Bytes!
-  timestamp: BigInt!
-  from: Bytes!
-  to: Bytes
-  amount: BigInt
-  description: String
-  deposits: [Deposit!] @derivedFrom(field: "transactions")
-  redemptions: [Redemption!] @derivedFrom(field: "transactions")
+    id: Bytes!
+    txHash: Bytes!
+    timestamp: BigInt!
+    from: Bytes!
+    to: Bytes
+    amount: BigInt
+    description: String
+    deposits: [Deposit!] @derivedFrom(field: "transactions")
+    redemptions: [Redemption!] @derivedFrom(field: "transactions")
 }
 
 type User @entity {
-  id: Bytes!
-  mintingDebt: BigInt!
-  tokenBalance: BigInt!
-  totalTokensHeld: BigInt!
-  tbtcToken : TBTCToken!
-  deposits: [Deposit!] @derivedFrom(field: "user")
-  redemptions: [Redemption!] @derivedFrom(field: "user")
+    id: Bytes!
+    mintingDebt: BigInt!
+    tokenBalance: BigInt!
+    totalTokensHeld: BigInt!
+    tbtcToken : TBTCToken!
+    deposits: [Deposit!] @derivedFrom(field: "user")
+    redemptions: [Redemption!] @derivedFrom(field: "user")
 }
 
 type Deposit @entity {
-  id: Bytes! #keccak256(fundingTxHash|fundingOutputIndex)
-  status: DepositStatus
-  user: User!
-  amount: BigInt!
-  newDebt: BigInt!
-  actualAmountReceived: BigInt!
-  treasuryFee: BigInt!
-  walletPubKeyHash: Bytes
-  fundingTxHash: Bytes
-  fundingOutputIndex: BigInt
-  blindingFactor: Bytes
-  refundPubKeyHash: Bytes
-  refundLocktime: Bytes
-  vault: Bytes
-  transactions: [Transaction!]! 
-  depositTimestamp: BigInt
-  updateTimestamp: BigInt
+    #keccak256(fundingTxHash|fundingOutputIndex)
+    id: Bytes!
+    status: DepositStatus
+    user: User!
+    amount: BigInt!
+    newDebt: BigInt!
+    actualAmountReceived: BigInt!
+    treasuryFee: BigInt!
+    walletPubKeyHash: Bytes
+    fundingTxHash: Bytes
+    fundingOutputIndex: BigInt
+    blindingFactor: Bytes
+    refundPubKeyHash: Bytes
+    refundLocktime: Bytes
+    vault: Bytes
+    transactions: [Transaction!]!
+    depositTimestamp: BigInt
+    updateTimestamp: BigInt
 }
 
 type Redemption @entity {
-  id: Bytes! #keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash)
-  status: RedemptionStatus
-  user: User!
-  amount: BigInt!
-  walletPubKeyHash: Bytes
-  redeemerOutputScript: Bytes
-  redemptionTxHash: Bytes
-  treasuryFee: BigInt
-  txMaxFee: BigInt
-  completedTxHash: Bytes
-  transactions: [Transaction!]!
-  redemptionTimestamp: BigInt
-  updateTimestamp: BigInt
+    #keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash)
+    id: Bytes!
+    status: RedemptionStatus
+    user: User!
+    amount: BigInt!
+    walletPubKeyHash: Bytes
+    redeemerOutputScript: Bytes
+    redemptionTxHash: Bytes
+    treasuryFee: BigInt
+    txMaxFee: BigInt
+    completedTxHash: Bytes
+    transactions: [Transaction!]!
+    redemptionTimestamp: BigInt
+    updateTimestamp: BigInt
 }
 
 
 type TBTCToken @entity{
-  id: ID!
-  name: String!
-  symbol: String!
-  decimals: Int!
-  address: Bytes!
-  totalSupply: BigInt!
-  totalMint: BigInt!
-  totalBurn: BigInt!
-  currentTokenHolders: BigInt!
-  holders: [User!] @derivedFrom(field: "tbtcToken")
+    id: ID!
+    name: String!
+    symbol: String!
+    decimals: Int!
+    address: Bytes!
+    totalSupply: BigInt!
+    totalMint: BigInt!
+    totalBurn: BigInt!
+    currentTokenHolders: BigInt!
+    holders: [User!] @derivedFrom(field: "tbtcToken")
+}
+
+enum TransactionEvent {
+    STAKED,
+    TOPUP,
+    UNSTAKE,
+    AUTHORIZED_RANDOM_BEACON,
+    AUTHORIZED_TBTC,
+    AUTHORIZED_UNKNOW,
+    DECREASE_AUTHORIZED_RANDOM_BEACON,
+    DECREASE_AUTHORIZED_TBTC,
+    REGISTERED_OPERATOR,
+    JOINED_SORTITION_POOL,
+    SLASHED,
+    WITHDRAW_REWARD,
+    REWARD_PARAMETERS_UPDATE,
+}
+
+type Event @entity {
+    #Hash of transaction
+    id: ID!
+    timestamp: BigInt!
+    from: Bytes!
+    to: Bytes
+    amount: BigInt!
+    event: TransactionEvent!
+    operator: [Operator!] @derivedFrom(field: "events")
+}
+
+type GroupPublicKey @entity {
+    # Group id
+    id: ID!
+    # Group public key
+    pubKey: Bytes!
+
+    terminated: Boolean!
+}
+
+type RandomBeaconGroup @entity {
+    id: ID!
+    pubKey: Bytes!
+    createdAt: BigInt!
+
+    operators: [Operator!]! @derivedFrom(field: "groups")
+
+    "The total number of slots. Since operators may appear multiple times, this is distinct from the unique number count of the group."
+    size: Int!
+    "How many unique operators are in this group - the number of membership records."
+    uniqueMemberCount: Int!
+
+    rewardPerMember: BigInt!
+
+    relayEntries: [RelayEntry!]! @derivedFrom(field: "group")
+}
+
+type RelayEntry @entity {
+    id: ID!
+    requestedAt: BigInt!
+    requestedBy: Bytes!
+    group: RandomBeaconGroup!
+
+    requestId: BigInt
+    previousEntry: Bytes
+    groupId: BigInt
+    generatedAt: BigInt
+    rewardPerMember: BigInt
+}
+
+type Operator @entity {
+    #Staking Provider address
+    id: ID!
+    #Operator address
+    address: Bytes!
+
+    "When this operator had a stake delegated to them. This is like a createdAt, and the operation also assigns the beneficiary/authorizer roles."
+    stakedAt: BigInt!
+    stakeType: Int!
+
+    groups: [RandomBeaconGroup!]!
+
+    # The other "staker" roles.
+    owner: Bytes
+    beneficiary: Bytes
+    authorizer: Bytes
+
+    # Authorizations
+    randomBeaconAuthorized: Boolean!
+    tBTCAuthorized: Boolean!
+
+    # Statistics
+    tBTCAuthorizedAmount: BigInt!
+    randomBeaconAuthorizedAmount: BigInt!
+    stakedAmount: BigInt!
+    "The amount of rewards collected by the operator after the latest update."
+    availableReward: BigInt!
+    "T Fees generated by this operator for random beacon work."
+    totalBeaconRewards: BigInt!
+
+    "How often this operator was involved in a fault."
+    misbehavedCount: Int!
+
+    "Duration of the sortition pool rewards ban imposed on operators  who misbehaved"
+    poolRewardBanDuration: BigInt!
+
+    beaconGroupCount: Int!
+    events: [Event!]!
+}
+
+"""
+Exposes some global system statistics. Only a single record with the id "current" is available.
+"""
+type StatsRecord @entity {
+    id: ID!
+
+    "The total number of stakers with a stake larger than 0."
+    numOperators: Int!
+    currentRequestedRelayEntry: BigInt
+
+    totalTBTCAuthorizedAmount: BigInt!
+    totalRandomBeaconAuthorizedAmount: BigInt!
+}
+"""
+Exposes some global system status data. Only a single record with the id "current" is available.
+"""
+type StatusRecord @entity {
+    id: ID!
+
+    "The currently requested RandomBeacon relay entry, if any. Only a single request can exist at a time."
+    currentRequestedRelayEntry: RelayEntry
 }
