@@ -15,6 +15,5 @@
   "dependencies": {
     "@graphprotocol/graph-cli": "0.38.0",
     "@graphprotocol/graph-ts": "0.29.3",
-    "web3": "^1.8.2"
   }
 }
