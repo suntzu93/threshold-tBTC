@@ -385,8 +385,12 @@ export function handleRewardParametersUpdated(
 }
 
 export function handleRewardsWithdrawn(event: RewardsWithdrawn): void {
+    let randomContract = RandomBeacon.bind(event.address);
+    let availableReward = randomContract.availableRewards(event.params.stakingProvider)
+
     let operator = getOrCreateOperator(event.params.stakingProvider);
     operator.rewardDispensed = operator.rewardDispensed.plus(event.params.amount);
+    operator.availableReward = availableReward;
     operator.save();
 }
 
