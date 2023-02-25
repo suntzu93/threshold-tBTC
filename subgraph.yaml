@@ -309,17 +309,6 @@ dataSources:
         - name: RandomBeacon
           file: ./abis/RandomBeacon.json
       eventHandlers:
-        - event: AuthorizationDecreaseApproved(indexed address)
-          handler: handleAuthorizationDecreaseApproved
-        - event: AuthorizationDecreaseRequested(indexed address,indexed
-            address,uint96,uint96,uint64)
-          handler: handleAuthorizationDecreaseRequested
-        - event: AuthorizationIncreased(indexed address,indexed address,uint96,uint96)
-          handler: handleAuthorizationIncreased
-        - event: AuthorizationParametersUpdated(uint96,uint64,uint64)
-          handler: handleAuthorizationParametersUpdated
-        - event: CallbackFailed(uint256,uint256)
-          handler: handleCallbackFailed
         - event: DkgMaliciousResultSlashed(indexed bytes32,uint256,address)
           handler: handleDkgMaliciousResultSlashed
         - event: DkgMaliciousResultSlashingFailed(indexed bytes32,uint256,address)
@@ -337,35 +326,18 @@ dataSources:
           handler: handleDkgStarted
         - event: DkgStateLocked()
           handler: handleDkgStateLocked
-        - event: DkgTimedOut()
-          handler: handleDkgTimedOut
-        - event: GasParametersUpdated(uint256,uint256,uint256,uint256)
-          handler: handleGasParametersUpdated
         - event: GovernanceTransferred(address,address)
           handler: handleGovernanceTransferred
-        - event: GroupCreationParametersUpdated(uint256,uint256,uint256,uint256,uint256,uint256)
-          handler: handleGroupCreationParametersUpdated
         - event: GroupRegistered(indexed uint64,indexed bytes)
           handler: handleGroupRegistered
         - event: InactivityClaimed(indexed uint64,uint256,address)
           handler: handleInactivityClaimed
-        - event: InvoluntaryAuthorizationDecreaseFailed(indexed address,indexed
-            address,uint96,uint96)
-          handler: handleInvoluntaryAuthorizationDecreaseFailed
         - event: OperatorJoinedSortitionPool(indexed address,indexed address)
           handler: handleOperatorJoinedSortitionPool
         - event: OperatorRegistered(indexed address,indexed address)
           handler: handleOperatorRegistered
-        - event: OperatorStatusUpdated(indexed address,indexed address)
-          handler: handleOperatorStatusUpdated
-        - event: ReimbursementPoolUpdated(address)
-          handler: handleReimbursementPoolUpdated
         - event: RelayEntryDelaySlashed(indexed uint256,uint256,address[])
           handler: handleRelayEntryDelaySlashed
-        - event: RelayEntryDelaySlashingFailed(indexed uint256,uint256,address[])
-          handler: handleRelayEntryDelaySlashingFailed
-        - event: RelayEntryParametersUpdated(uint256,uint256,uint256)
-          handler: handleRelayEntryParametersUpdated
         - event: RelayEntryRequested(indexed uint256,uint64,bytes)
           handler: handleRelayEntryRequested
         - event: RelayEntrySubmitted(indexed uint256,address,bytes)
@@ -374,20 +346,10 @@ dataSources:
           handler: handleRelayEntryTimedOut
         - event: RelayEntryTimeoutSlashed(indexed uint256,uint256,address[])
           handler: handleRelayEntryTimeoutSlashed
-        - event: RelayEntryTimeoutSlashingFailed(indexed uint256,uint256,address[])
-          handler: handleRelayEntryTimeoutSlashingFailed
-        - event: RequesterAuthorizationUpdated(indexed address,bool)
-          handler: handleRequesterAuthorizationUpdated
-        - event: RewardParametersUpdated(uint256,uint256,uint256,uint256)
-          handler: handleRewardParametersUpdated
         - event: RewardsWithdrawn(indexed address,uint96)
           handler: handleRewardsWithdrawn
-        - event: SlashingParametersUpdated(uint256,uint256,uint256)
-          handler: handleSlashingParametersUpdated
         - event: UnauthorizedSigningSlashed(indexed uint64,uint256,address[])
           handler: handleUnauthorizedSigningSlashed
-        - event: UnauthorizedSigningSlashingFailed(indexed uint64,uint256,address[])
-          handler: handleUnauthorizedSigningSlashingFailed
       file: ./src/mappingRandomBeacon.ts
   - kind: ethereum
     name: SortitionPool

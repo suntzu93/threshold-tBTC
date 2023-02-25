@@ -127,10 +127,9 @@ export function getOrCreateOperator(address: Address): Operator {
         operator.stakedAmount = constants.ZERO_BI;
         operator.availableReward = constants.ZERO_BI;
         operator.rewardDispensed = constants.ZERO_BI;
-        operator.totalBeaconRewards = constants.ZERO_BI;
+        operator.totalSlashedAmount = constants.ZERO_BI;
         operator.misbehavedCount = 0;
         operator.poolRewardBanDuration = constants.ZERO_BI;
-        operator.totalBeaconRewards = constants.ZERO_BI;
         operator.beaconGroupCount = 0;
         operator.events = [];
         operator.groups = [];

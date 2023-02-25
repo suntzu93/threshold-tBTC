@@ -1,11 +1,6 @@
-import {Address, BigInt, Bytes} from "@graphprotocol/graph-ts"
+import {Address, BigInt, Bytes, ethereum} from "@graphprotocol/graph-ts"
 import {
     RandomBeacon,
-    AuthorizationDecreaseApproved,
-    AuthorizationDecreaseRequested,
-    AuthorizationIncreased,
-    AuthorizationParametersUpdated,
-    CallbackFailed,
     DkgMaliciousResultSlashed,
     DkgMaliciousResultSlashingFailed,
     DkgResultApproved,
@@ -14,31 +9,18 @@ import {
     DkgSeedTimedOut,
     DkgStarted,
     DkgStateLocked,
-    DkgTimedOut,
-    GasParametersUpdated,
     GovernanceTransferred,
-    GroupCreationParametersUpdated,
     GroupRegistered,
     InactivityClaimed,
-    InvoluntaryAuthorizationDecreaseFailed,
     OperatorJoinedSortitionPool,
     OperatorRegistered,
-    OperatorStatusUpdated,
-    ReimbursementPoolUpdated,
     RelayEntryDelaySlashed,
-    RelayEntryDelaySlashingFailed,
-    RelayEntryParametersUpdated,
     RelayEntryRequested,
     RelayEntrySubmitted,
     RelayEntryTimedOut,
     RelayEntryTimeoutSlashed,
-    RelayEntryTimeoutSlashingFailed,
-    RequesterAuthorizationUpdated,
-    RewardParametersUpdated,
     RewardsWithdrawn,
-    SlashingParametersUpdated,
     UnauthorizedSigningSlashed,
-    UnauthorizedSigningSlashingFailed
 } from "../generated/RandomBeacon/RandomBeacon"
 
 import {
@@ -57,37 +39,6 @@ import {
 
 import * as Const from "./utils/constants"
 import {getBeaconGroupId, getIDFromEvent} from "./utils/utils";
-
-export function handleAuthorizationDecreaseApproved(
-    event: AuthorizationDecreaseApproved
-): void {
-}
-
-/**
- * Called when staker unstake part of amount staked
- * @param event
- */
-export function handleAuthorizationDecreaseRequested(
-    event: AuthorizationDecreaseRequested
-): void {
-}
-
-/**
- * Called when staker topup more token
- * @param event
- */
-export function handleAuthorizationIncreased(
-    event: AuthorizationIncreased
-): void {
-}
-
-export function handleAuthorizationParametersUpdated(
-    event: AuthorizationParametersUpdated
-): void {
-}
-
-export function handleCallbackFailed(event: CallbackFailed): void {
-}
 
 export function handleDkgMaliciousResultSlashed(
     event: DkgMaliciousResultSlashed
@@ -134,10 +85,7 @@ export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
         event.params.result.membersHash.toHexString()
     ])
 
-    let group = new RandomBeaconGroup(getBeaconGroupId(event.params.result.groupPubKey));
-    group.createdAt = event.block.timestamp
-    group.pubKey = event.params.result.groupPubKey
-    group.rewardPerMember = Const.ZERO_BI
+    let group = RandomBeaconGroup.load(getBeaconGroupId(event.params.result.groupPubKey))!;
 
     let memberIds = event.params.result.members;
 
@@ -149,19 +97,9 @@ export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
     // Get list members address by member ids
     let members = sortitionPoolContract.getIDOperators(memberIds)
 
-    //TODO: not sure we need this code , have to check when we have data
-    let uniqueAddresses: string[] = [];
     for (let i = 0; i < members.length; i++) {
-        let memberAddress = members[i].toHexString();
-        if (!uniqueAddresses.includes(memberAddress)) {
-            uniqueAddresses.push(memberAddress);
-        }
-    }
-
-    for (let i = 0; i < uniqueAddresses.length; i++) {
-        let memberAddress = uniqueAddresses[i];
-
-        let operator = getOrCreateOperator(Address.fromString(memberAddress));
+        let memberAddress = members[i];
+        let operator = getOrCreateOperator(memberAddress);
         operator.beaconGroupCount += 1;
         let groups = operator.groups
         groups.push(group.id)
@@ -171,7 +109,6 @@ export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
     }
 
     group.size = members.length;
-    group.uniqueMemberCount = uniqueAddresses.length;
     group.save()
 }
 
@@ -184,19 +121,9 @@ export function handleDkgStarted(event: DkgStarted): void {
 export function handleDkgStateLocked(event: DkgStateLocked): void {
 }
 
-export function handleDkgTimedOut(event: DkgTimedOut): void {
-}
-
-export function handleGasParametersUpdated(event: GasParametersUpdated): void {
-}
 
 export function handleGovernanceTransferred(
     event: GovernanceTransferred
-): void {
-}
-
-export function handleGroupCreationParametersUpdated(
-    event: GroupCreationParametersUpdated
 ): void {
 }
 
@@ -209,11 +136,18 @@ export function handleGroupRegistered(event: GroupRegistered): void {
         event.params.groupId.toString(),
         event.params.groupPubKey.toHex()
     ])
+    let group = new RandomBeaconGroup(getBeaconGroupId(event.params.groupPubKey));
+    group.createdAt = event.block.timestamp
+    group.totalSlashedAmount = Const.ZERO_BI;
+    group.size = 0
+    group.save()
+
     let groupId = event.params.groupId.toString()
     let groupPubKey = GroupPublicKey.load(groupId)
     if (!groupPubKey) {
         groupPubKey = new GroupPublicKey(groupId)
     }
+    groupPubKey.group = group.id;
     groupPubKey.terminated = false
     groupPubKey.pubKey = event.params.groupPubKey
     groupPubKey.save()
@@ -222,10 +156,6 @@ export function handleGroupRegistered(event: GroupRegistered): void {
 export function handleInactivityClaimed(event: InactivityClaimed): void {
 }
 
-export function handleInvoluntaryAuthorizationDecreaseFailed(
-    event: InvoluntaryAuthorizationDecreaseFailed
-): void {
-}
 
 export function handleOperatorJoinedSortitionPool(
     event: OperatorJoinedSortitionPool
@@ -269,38 +199,6 @@ export function handleOperatorRegistered(event: OperatorRegistered): void {
     operator.save();
 }
 
-export function handleOperatorStatusUpdated(
-    event: OperatorStatusUpdated
-): void {
-    log.warning("thanhlv2 OperatorStatusUpdated " +
-        "tx = {}, " +
-        "stakingProvider = {}," +
-        "operator = {}", [
-        event.transaction.hash.toHexString(),
-        event.params.stakingProvider.toHex(),
-        event.params.operator.toHex()
-    ])
-}
-
-export function handleReimbursementPoolUpdated(
-    event: ReimbursementPoolUpdated
-): void {
-}
-
-export function handleRelayEntryDelaySlashed(
-    event: RelayEntryDelaySlashed
-): void {
-}
-
-export function handleRelayEntryDelaySlashingFailed(
-    event: RelayEntryDelaySlashingFailed
-): void {
-}
-
-export function handleRelayEntryParametersUpdated(
-    event: RelayEntryParametersUpdated
-): void {
-}
 
 export function handleRelayEntryRequested(event: RelayEntryRequested): void {
     log.warning("thanhlv2 handleRelayEntryRequested tx = {}, requestId = {},groupId = {} , previousEntry={}", [
@@ -364,47 +262,71 @@ export function handleRelayEntryTimedOut(event: RelayEntryTimedOut): void {
     }
 }
 
+function slashOperators(groupMembers: Array<Address>, amount: BigInt,event: ethereum.Event,): void {
+    for (let i = 0; i < groupMembers.length; i++) {
+        let eventEntity = getOrCreateOperatorEvent(event, "SLASHED")
+        eventEntity.amount = amount
+        eventEntity.save()
+
+        let member = groupMembers[i];
+        let operator = getOrCreateOperator(member);
+        operator.misbehavedCount += 1;
+        operator.totalSlashedAmount = operator.totalSlashedAmount.plus(amount);
+
+        let events = operator.events
+        events.push(eventEntity.id)
+        operator.events = events
+
+        operator.save()
+    }
+}
+
 export function handleRelayEntryTimeoutSlashed(
     event: RelayEntryTimeoutSlashed
 ): void {
+    slashOperators(event.params.groupMembers, event.params.slashingAmount, event);
 }
 
-export function handleRelayEntryTimeoutSlashingFailed(
-    event: RelayEntryTimeoutSlashingFailed
+
+export function handleRelayEntryDelaySlashed(
+    event: RelayEntryDelaySlashed
 ): void {
+    slashOperators(event.params.groupMembers, event.params.slashingAmount, event);
 }
 
-export function handleRequesterAuthorizationUpdated(
-    event: RequesterAuthorizationUpdated
+export function handleUnauthorizedSigningSlashed(
+    event: UnauthorizedSigningSlashed
 ): void {
-}
+    let groupId = event.params.groupId;
+    let slashingAmount = event.params.unauthorizedSigningSlashingAmount;
 
-export function handleRewardParametersUpdated(
-    event: RewardParametersUpdated
-): void {
+    let groupPubKey = GroupPublicKey.load(groupId.toString())!
+    let group = RandomBeaconGroup.load(getBeaconGroupId(groupPubKey.pubKey))!;
+    group.misbehavedCount += 1;
+    group.totalSlashedAmount = group.totalSlashedAmount.plus(slashingAmount);
+    group.save()
+
+    slashOperators(event.params.groupMembers, slashingAmount, event);
 }
 
 export function handleRewardsWithdrawn(event: RewardsWithdrawn): void {
+    let eventEntity = getOrCreateOperatorEvent(event, "WITHDRAW_REWARD")
+    eventEntity.amount = event.params.amount
+    eventEntity.save()
+
     let randomContract = RandomBeacon.bind(event.address);
     let availableReward = randomContract.availableRewards(event.params.stakingProvider)
 
     let operator = getOrCreateOperator(event.params.stakingProvider);
     operator.rewardDispensed = operator.rewardDispensed.plus(event.params.amount);
     operator.availableReward = availableReward;
+
+    let events = operator.events
+    events.push(eventEntity.id)
+    operator.events = events
+
     operator.save();
 }
 
-export function handleSlashingParametersUpdated(
-    event: SlashingParametersUpdated
-): void {
-}
 
-export function handleUnauthorizedSigningSlashed(
-    event: UnauthorizedSigningSlashed
-): void {
-}
 
-export function handleUnauthorizedSigningSlashingFailed(
-    event: UnauthorizedSigningSlashingFailed
-): void {
-}
