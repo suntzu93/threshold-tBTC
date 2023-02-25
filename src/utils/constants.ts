@@ -16,8 +16,17 @@ export const ADDRESS_TBTC = dataSource.network() == "goerli" ? Address.fromStrin
     '0x18084fbA666a33d37592fA2633fD49a74DD93a88',
 );
 
-export const RANDOM_BEACON_ADDR = Address.fromString("0xF177CfA720ceC42841c04A458f6c68e1243C1b49");
-export const TBTC_AUTH_ADDR = Address.fromString("0x0f0E2afF99A55B11026Fb270A05f04d37724dE86");
+export const RANDOM_BEACON_ADDR = dataSource.network() == "goerli" ? Address.fromString(
+    '0xF177CfA720ceC42841c04A458f6c68e1243C1b49',
+) : Address.fromString(
+    '0x5499f54b4A1CB4816eefCf78962040461be3D80b',
+);
+
+export const TBTC_AUTH_ADDR = dataSource.network() == "goerli" ? Address.fromString(
+    '0x0f0E2afF99A55B11026Fb270A05f04d37724dE86',
+) : Address.fromString(
+    '0x01B67b1194C75264d06F808A921228a95C765dd7',
+);
 
 
 export let ZERO_BI = BigInt.fromI32(0)
