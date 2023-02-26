@@ -1,24 +1,9 @@
 import {Address, BigInt} from "@graphprotocol/graph-ts"
 import {
-    TokenStaking,
-    ApplicationStatusChanged,
-    AuthorizationCeilingSet,
-    AuthorizationDecreaseApproved,
     AuthorizationDecreaseRequested,
     AuthorizationIncreased,
-    AuthorizationInvoluntaryDecreased,
-    DelegateChanged,
-    DelegateVotesChanged,
-    GovernanceTransferred,
-    MinimumStakeAmountSet,
-    NotificationRewardPushed,
-    NotificationRewardSet,
-    NotificationRewardWithdrawn,
     NotifierRewarded,
     OwnerRefreshed,
-    PanicButtonSet,
-    SlashingProcessed,
-    StakeDiscrepancyPenaltySet,
     Staked,
     TokensSeized,
     ToppedUp,
@@ -34,64 +19,6 @@ import {
 
 import * as Const from "./utils/constants"
 import * as Utils from "./utils/utils"
-
-export function handleApplicationStatusChanged(
-    event: ApplicationStatusChanged
-): void {
-
-    // Note: If a handler doesn't require existing field values, it is faster
-    // _not_ to load the entity from the store. Instead, create it fresh with
-    // `new Entity(...)`, set the fields that should be updated and save the
-    // entity back to the store. Fields that were not set or unset remain
-    // unchanged, allowing for partial updates to be applied.
-
-    // It is also possible to access smart contracts from mappings. For
-    // example, the contract that has emitted the event can be connected to
-    // with:
-    //
-    // let contract = Contract.bind(event.address)
-    //
-    // The following functions can then be called on this contract to access
-    // state variables and other data:
-    //
-    // - contract.applicationInfo(...)
-    // - contract.applications(...)
-    // - contract.approveAuthorizationDecrease(...)
-    // - contract.authorizationCeiling(...)
-    // - contract.authorizedStake(...)
-    // - contract.checkpoints(...)
-    // - contract.delegates(...)
-    // - contract.getApplicationsLength(...)
-    // - contract.getAvailableToAuthorize(...)
-    // - contract.getMinStaked(...)
-    // - contract.getPastTotalSupply(...)
-    // - contract.getPastVotes(...)
-    // - contract.getSlashingQueueLength(...)
-    // - contract.getStartStakingTimestamp(...)
-    // - contract.getVotes(...)
-    // - contract.governance(...)
-    // - contract.minTStakeAmount(...)
-    // - contract.notificationReward(...)
-    // - contract.notifiersTreasury(...)
-    // - contract.numCheckpoints(...)
-    // - contract.rolesOf(...)
-    // - contract.slashingQueue(...)
-    // - contract.slashingQueueIndex(...)
-    // - contract.stakeDiscrepancyPenalty(...)
-    // - contract.stakeDiscrepancyRewardMultiplier(...)
-    // - contract.stakedNu(...)
-    // - contract.stakes(...)
-}
-
-export function handleAuthorizationCeilingSet(
-    event: AuthorizationCeilingSet
-): void {
-}
-
-export function handleAuthorizationDecreaseApproved(
-    event: AuthorizationDecreaseApproved
-): void {
-}
 
 export function handleAuthorizationDecreaseRequested(
     event: AuthorizationDecreaseRequested
@@ -164,60 +91,10 @@ export function handleAuthorizationIncreased(
 
 }
 
-export function handleAuthorizationInvoluntaryDecreased(
-    event: AuthorizationInvoluntaryDecreased
-): void {
-}
-
-export function handleDelegateChanged(event: DelegateChanged): void {
-}
-
-export function handleDelegateVotesChanged(event: DelegateVotesChanged): void {
-}
-
-export function handleGovernanceTransferred(
-    event: GovernanceTransferred
-): void {
-}
-
-export function handleMinimumStakeAmountSet(
-    event: MinimumStakeAmountSet
-): void {
-}
-
-export function handleNotificationRewardPushed(
-    event: NotificationRewardPushed
-): void {
-}
-
-export function handleNotificationRewardSet(
-    event: NotificationRewardSet
-): void {
-}
-
-export function handleNotificationRewardWithdrawn(
-    event: NotificationRewardWithdrawn
-): void {
-}
-
-export function handleNotifierRewarded(event: NotifierRewarded): void {
-}
-
 export function handleOwnerRefreshed(event: OwnerRefreshed): void {
     let operator = getOrCreateOperator(event.params.stakingProvider)
     operator.owner = event.params.newOwner
     operator.save()
-}
-
-export function handlePanicButtonSet(event: PanicButtonSet): void {
-}
-
-export function handleSlashingProcessed(event: SlashingProcessed): void {
-}
-
-export function handleStakeDiscrepancyPenaltySet(
-    event: StakeDiscrepancyPenaltySet
-): void {
 }
 
 export function handleStaked(event: Staked): void {

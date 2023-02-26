@@ -107,46 +107,18 @@ dataSources:
         - name: TBTCVault
           file: ./abis/TBTCVault.json
       eventHandlers:
-        - event: GuardianAdded(indexed address)
-          handler: handleGuardianAdded
-        - event: GuardianRemoved(indexed address)
-          handler: handleGuardianRemoved
-        - event: Minted(indexed address,uint256)
-          handler: handleMinted
-        - event: MinterAdded(indexed address)
-          handler: handleMinterAdded
-        - event: MinterRemoved(indexed address)
-          handler: handleMinterRemoved
         - event: OptimisticMintingCancelled(indexed address,indexed uint256)
           handler: handleOptimisticMintingCancelled
         - event: OptimisticMintingDebtRepaid(indexed address,uint256)
           handler: handleOptimisticMintingDebtRepaid
-        - event: OptimisticMintingDelayUpdateStarted(uint32)
-          handler: handleOptimisticMintingDelayUpdateStarted
-        - event: OptimisticMintingDelayUpdated(uint32)
-          handler: handleOptimisticMintingDelayUpdated
-        - event: OptimisticMintingFeeUpdateStarted(uint32)
-          handler: handleOptimisticMintingFeeUpdateStarted
-        - event: OptimisticMintingFeeUpdated(uint32)
-          handler: handleOptimisticMintingFeeUpdated
         - event: OptimisticMintingFinalized(indexed address,indexed uint256,indexed
             address,uint256)
           handler: handleOptimisticMintingFinalized
-        - event: OptimisticMintingPaused()
-          handler: handleOptimisticMintingPaused
         - event: OptimisticMintingRequested(indexed address,indexed uint256,indexed
             address,uint256,bytes32,uint32)
           handler: handleOptimisticMintingRequested
-        - event: OptimisticMintingUnpaused()
-          handler: handleOptimisticMintingUnpaused
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
-        - event: Unminted(indexed address,uint256)
-          handler: handleUnminted
-        - event: UpgradeFinalized(address)
-          handler: handleUpgradeFinalized
-        - event: UpgradeInitiated(address,uint256)
-          handler: handleUpgradeInitiated
       file: ./src/mappingTBTCVault.ts
   - kind: ethereum
     name: TBTC
@@ -180,71 +152,18 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - ApplicationStatusChanged
-        - AuthorizationCeilingSet
-        - AuthorizationDecreaseApproved
-        - AuthorizationDecreaseRequested
-        - AuthorizationIncreased
-        - AuthorizationInvoluntaryDecreased
-        - DelegateChanged
-        - DelegateVotesChanged
-        - GovernanceTransferred
-        - MinimumStakeAmountSet
-        - NotificationRewardPushed
-        - NotificationRewardSet
-        - NotificationRewardWithdrawn
-        - NotifierRewarded
-        - OwnerRefreshed
-        - PanicButtonSet
-        - SlashingProcessed
-        - StakeDiscrepancyPenaltySet
-        - Staked
-        - TokensSeized
-        - ToppedUp
-        - Unstaked
+        - Deposit
       abis:
         - name: TokenStaking
           file: ./abis/TokenStaking.json
       eventHandlers:
-        - event: ApplicationStatusChanged(indexed address,indexed uint8)
-          handler: handleApplicationStatusChanged
-        - event: AuthorizationCeilingSet(uint256)
-          handler: handleAuthorizationCeilingSet
-        - event: AuthorizationDecreaseApproved(indexed address,indexed
-            address,uint96,uint96)
-          handler: handleAuthorizationDecreaseApproved
         - event: AuthorizationDecreaseRequested(indexed address,indexed
             address,uint96,uint96)
           handler: handleAuthorizationDecreaseRequested
         - event: AuthorizationIncreased(indexed address,indexed address,uint96,uint96)
           handler: handleAuthorizationIncreased
-        - event: AuthorizationInvoluntaryDecreased(indexed address,indexed
-            address,uint96,uint96,indexed bool)
-          handler: handleAuthorizationInvoluntaryDecreased
-        - event: DelegateChanged(indexed address,indexed address,indexed address)
-          handler: handleDelegateChanged
-        - event: DelegateVotesChanged(indexed address,uint256,uint256)
-          handler: handleDelegateVotesChanged
-        - event: GovernanceTransferred(address,address)
-          handler: handleGovernanceTransferred
-        - event: MinimumStakeAmountSet(uint96)
-          handler: handleMinimumStakeAmountSet
-        - event: NotificationRewardPushed(uint96)
-          handler: handleNotificationRewardPushed
-        - event: NotificationRewardSet(uint96)
-          handler: handleNotificationRewardSet
-        - event: NotificationRewardWithdrawn(address,uint96)
-          handler: handleNotificationRewardWithdrawn
-        - event: NotifierRewarded(indexed address,uint256)
-          handler: handleNotifierRewarded
         - event: OwnerRefreshed(indexed address,indexed address,indexed address)
           handler: handleOwnerRefreshed
-        - event: PanicButtonSet(indexed address,indexed address)
-          handler: handlePanicButtonSet
-        - event: SlashingProcessed(indexed address,uint256,uint256)
-          handler: handleSlashingProcessed
-        - event: StakeDiscrepancyPenaltySet(uint96,uint256)
-          handler: handleStakeDiscrepancyPenaltySet
         - event: Staked(indexed uint8,indexed address,indexed
             address,address,address,uint96)
           handler: handleStaked
@@ -267,15 +186,6 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - AuthorizationDecreaseApproved
-        - AuthorizationDecreaseRequested
-        - AuthorizationIncreased
-        - AuthorizationParametersUpdated
-        - CallbackFailed
-        - DkgMaliciousResultSlashed
-        - DkgMaliciousResultSlashingFailed
-        - DkgResultApproved
-        - DkgResultChallenged
         - DkgResultSubmitted
         - DkgSeedTimedOut
         - DkgStarted

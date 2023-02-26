@@ -1,50 +1,18 @@
 import {Address, BigInt} from "@graphprotocol/graph-ts";
 import {
     TBTCVault,
-    GuardianAdded,
-    GuardianRemoved,
-    Minted,
-    MinterAdded,
-    MinterRemoved,
     OptimisticMintingCancelled,
     OptimisticMintingDebtRepaid,
-    OptimisticMintingDelayUpdateStarted,
-    OptimisticMintingDelayUpdated,
-    OptimisticMintingFeeUpdateStarted,
-    OptimisticMintingFeeUpdated,
     OptimisticMintingFinalized,
     OptimisticMintingPaused,
     OptimisticMintingRequested,
-    OptimisticMintingUnpaused,
     OwnershipTransferred,
-    Unminted,
-    UpgradeFinalized,
-    UpgradeInitiated,
 } from "../generated/TBTCVault/TBTCVault";
 import {log, Bytes} from "@graphprotocol/graph-ts";
 import * as Helper from "./utils/helper";
 import * as Utils from "./utils/utils"
 import * as Const from "./utils/constants"
 
-
-export function handleGuardianAdded(event: GuardianAdded): void {
-}
-
-export function handleGuardianRemoved(event: GuardianRemoved): void {
-}
-
-export function handleMinted(event: Minted): void {
-    log.error("handleMinted called: to = {}, amount = {} ", [
-        event.params.to.toHexString(),
-        event.params.amount.toString(),
-    ]);
-}
-
-export function handleMinterAdded(event: MinterAdded): void {
-}
-
-export function handleMinterRemoved(event: MinterRemoved): void {
-}
 
 export function handleOptimisticMintingCancelled(
     event: OptimisticMintingCancelled
@@ -69,27 +37,11 @@ export function handleOptimisticMintingCancelled(
 export function handleOptimisticMintingDebtRepaid(
     event: OptimisticMintingDebtRepaid
 ): void {
+    let user = Helper.getOrCreateUser(event.params.depositor)
+    user.mintingDebt = event.params.optimisticMintingDebt
+    user.save()
 }
 
-export function handleOptimisticMintingDelayUpdateStarted(
-    event: OptimisticMintingDelayUpdateStarted
-): void {
-}
-
-export function handleOptimisticMintingDelayUpdated(
-    event: OptimisticMintingDelayUpdated
-): void {
-}
-
-export function handleOptimisticMintingFeeUpdateStarted(
-    event: OptimisticMintingFeeUpdateStarted
-): void {
-}
-
-export function handleOptimisticMintingFeeUpdated(
-    event: OptimisticMintingFeeUpdated
-): void {
-}
 
 export function handleOptimisticMintingFinalized(
     event: OptimisticMintingFinalized
@@ -98,7 +50,7 @@ export function handleOptimisticMintingFinalized(
     let tBTCVaultContract = TBTCVault.bind(event.address)
 
     let user = Helper.getOrCreateUser(event.params.depositor)
-    user.mintingDebt = tBTCVaultContract.optimisticMintingDebt(Address.fromBytes(user.id))
+    user.mintingDebt = event.params.optimisticMintingDebt
     user.save()
 
     // Divisor used to compute the treasury fee taken from each
@@ -177,19 +129,7 @@ export function handleOptimisticMintingRequested(
 
 }
 
-export function handleOptimisticMintingUnpaused(
-    event: OptimisticMintingUnpaused
-): void {
-}
 
 export function handleOwnershipTransferred(event: OwnershipTransferred): void {
 }
 
-export function handleUnminted(event: Unminted): void {
-}
-
-export function handleUpgradeFinalized(event: UpgradeFinalized): void {
-}
-
-export function handleUpgradeInitiated(event: UpgradeInitiated): void {
-}

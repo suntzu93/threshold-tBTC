@@ -118,6 +118,7 @@ export function getOrCreateOperator(address: Address): Operator {
     if (!operator) {
         operator = new Operator(address.toHexString());
         operator.address = constants.ADDRESS_ZERO;
+        operator.isRegisteredOperatorAddress = false;
         operator.stakedAt = constants.ZERO_BI;
         operator.stakeType = 0;
         operator.randomBeaconAuthorized = false;

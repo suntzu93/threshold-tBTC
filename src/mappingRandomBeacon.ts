@@ -209,6 +209,7 @@ export function handleOperatorRegistered(event: OperatorRegistered): void {
 
     let operator = getOrCreateOperator(event.params.stakingProvider)
     operator.address = event.params.operator
+    operator.isRegisteredOperatorAddress = true
     let events = operator.events
     events.push(eventEntity.id)
     operator.events = events

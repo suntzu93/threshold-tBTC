@@ -171,6 +171,7 @@ type Operator @entity {
     id: ID!
     #Operator address
     address: Bytes!
+    isRegisteredOperatorAddress: Boolean!
 
     "When this operator had a stake delegated to them. This is like a createdAt, and the operation also assigns the beneficiary/authorizer roles."
     stakedAt: BigInt!
