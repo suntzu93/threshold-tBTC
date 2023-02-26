@@ -123,14 +123,14 @@ type GroupPublicKey @entity {
 
 type RandomBeaconGroup @entity {
     id: ID!
-    groupPublicKey: GroupPublicKey! @derivedFrom(field: "group")
     createdAt: BigInt!
 
-    operators: [Operator!]! @derivedFrom(field: "groups")
+    groupPublicKey: GroupPublicKey! @derivedFrom(field: "group")
+    memberships: [RandomBeaconGroupMembership!]! @derivedFrom(field: "group")
 
     "The total number of slots."
     size: Int!
-
+    uniqueMemberCount: Int!
     "Total fault."
     misbehavedCount: Int!
     totalSlashedAmount: BigInt!
@@ -138,17 +138,32 @@ type RandomBeaconGroup @entity {
     relayEntries: [RelayEntry!]! @derivedFrom(field: "group")
 }
 
+"""
+Represents the membership of an operator in a beacon group.
+"""
+type RandomBeaconGroupMembership @entity {
+    #keccak256(group id , operator address)
+    id: ID!
+    group: RandomBeaconGroup!
+    operator: Operator!
+
+    "The same operator can fill multiple membership slots within a group."
+    count: Int!
+
+    # These are denormalized fields from the group & operator, to allow sorting memberships by these fields.
+    groupCreatedAt: BigInt!
+}
+
 type RelayEntry @entity {
+    "Request Id"
     id: ID!
     requestedAt: BigInt!
     requestedBy: Bytes!
     group: RandomBeaconGroup!
 
-    requestId: BigInt
-    previousEntry: Bytes
-    groupId: BigInt
-    generatedAt: BigInt
-    rewardPerMember: BigInt
+    value: Bytes
+    submittedAt: BigInt
+
 }
 
 type Operator @entity {
@@ -161,7 +176,7 @@ type Operator @entity {
     stakedAt: BigInt!
     stakeType: Int!
 
-    groups: [RandomBeaconGroup!]!
+    randomBeaconGroupMemberships: [RandomBeaconGroupMembership!]! @derivedFrom(field: "operator")
 
     # The other "staker" roles.
     owner: Bytes

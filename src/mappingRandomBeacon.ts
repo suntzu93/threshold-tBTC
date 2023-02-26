@@ -28,7 +28,7 @@ import {
 } from "../generated/SortitionPool/SortitionPool"
 import {log} from '@graphprotocol/graph-ts'
 
-import {RandomBeaconGroup, RelayEntry, GroupPublicKey} from "../generated/schema"
+import {RandomBeaconGroup, RelayEntry, GroupPublicKey, RandomBeaconGroupMembership} from "../generated/schema"
 
 import {
     getOrCreateOperator,
@@ -38,7 +38,7 @@ import {
 } from "./utils/helper"
 
 import * as Const from "./utils/constants"
-import {getBeaconGroupId, getIDFromEvent} from "./utils/utils";
+import {getBeaconGroupId, keccak256TwoString} from "./utils/utils";
 
 export function handleDkgMaliciousResultSlashed(
     event: DkgMaliciousResultSlashed
@@ -97,17 +97,32 @@ export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
     // Get list members address by member ids
     let members = sortitionPoolContract.getIDOperators(memberIds)
 
+    let memberCounts: Map<string, i32> = new Map();
+    let uniqueAddresses: string[] = []; // Map does not allow us to list entries?
     for (let i = 0; i < members.length; i++) {
-        let memberAddress = members[i];
-        let operator = getOrCreateOperator(memberAddress);
-        operator.beaconGroupCount += 1;
-        let groups = operator.groups
-        groups.push(group.id)
-        operator.groups = groups
-
-        operator.save();
+        let memberAddress = members[i].toHexString();
+        if (!memberCounts.has(memberAddress)) {
+            memberCounts.set(memberAddress, 1)
+            uniqueAddresses.push(memberAddress);
+        } else {
+            memberCounts.set(memberAddress, memberCounts.get(memberAddress) + 1)
+        }
     }
 
+    for (let i = 0; i < uniqueAddresses.length; i++) {
+        let memberAddress = uniqueAddresses[i];
+        let membership = new RandomBeaconGroupMembership(keccak256TwoString(group.id, memberAddress));
+        membership.group = group.id;
+        membership.operator = memberAddress;
+        membership.count = memberCounts.get(memberAddress);
+        membership.groupCreatedAt = group.createdAt;
+        membership.save()
+
+        let operator = getOrCreateOperator(Address.fromString(memberAddress));
+        operator.beaconGroupCount += 1;
+        operator.save();
+    }
+    group.uniqueMemberCount = uniqueAddresses.length
     group.size = members.length;
     group.save()
 }
@@ -140,6 +155,7 @@ export function handleGroupRegistered(event: GroupRegistered): void {
     group.createdAt = event.block.timestamp
     group.totalSlashedAmount = Const.ZERO_BI;
     group.size = 0
+    group.uniqueMemberCount = 0
     group.save()
 
     let groupId = event.params.groupId.toString()
@@ -209,19 +225,11 @@ export function handleRelayEntryRequested(event: RelayEntryRequested): void {
     ])
     let groupPubKey = GroupPublicKey.load(event.params.groupId.toString())!
     let pubKey = groupPubKey.pubKey
-    let entry = new RelayEntry(getIDFromEvent(event));
+    let entry = new RelayEntry(event.params.requestId.toString());
     entry.requestedAt = event.block.timestamp;
-    entry.generatedAt = event.block.timestamp;
     entry.requestedBy = event.transaction.from;
     entry.group = getBeaconGroupId(pubKey)
-    entry.requestId = event.params.requestId;
-    entry.groupId = event.params.groupId;
-    entry.previousEntry = event.params.previousEntry;
     entry.save();
-
-    let status = getStatus();
-    status.currentRequestedRelayEntry = entry.id;
-    status.save();
 
 }
 
@@ -232,16 +240,19 @@ export function handleRelayEntrySubmitted(event: RelayEntrySubmitted): void {
         event.params.submitter.toString(),
         event.params.entry.toHexString(),
     ])
-    let status = getStatus();
-    let entry = RelayEntry.load(status.currentRequestedRelayEntry!)!;
-    let group = RandomBeaconGroup.load(entry.group)!;
+    // let status = getStatus();
+    let entry = RelayEntry.load(event.params.requestId.toString())!;
+    entry.value = event.params.entry;
+    entry.submittedAt = event.block.timestamp;
+    entry.save();
 
     let randomContract = RandomBeacon.bind(event.address);
-    let operators = group.operators;
-    for (let i = 0; i < operators.length; i++) {
-        let operatorAdd = operators[i];
-        let availableReward = randomContract.availableRewards(Address.fromString(operatorAdd))
-        let operator = getOrCreateOperator(Address.fromString(operatorAdd));
+    let group = RandomBeaconGroup.load(entry.group)!;
+    let memberships = group.memberships;
+    for (let i = 0; i < memberships.length; i++) {
+        let membership = RandomBeaconGroupMembership.load(memberships[i])!;
+        let availableReward = randomContract.availableRewards(Address.fromString(membership.operator))
+        let operator = getOrCreateOperator(Address.fromString(membership.operator));
         operator.availableReward = availableReward;
         operator.save();
     }
@@ -262,7 +273,7 @@ export function handleRelayEntryTimedOut(event: RelayEntryTimedOut): void {
     }
 }
 
-function slashOperators(groupMembers: Array<Address>, amount: BigInt,event: ethereum.Event,): void {
+function slashOperators(groupMembers: Array<Address>, amount: BigInt, event: ethereum.Event,): void {
     for (let i = 0; i < groupMembers.length; i++) {
         let eventEntity = getOrCreateOperatorEvent(event, "SLASHED")
         eventEntity.amount = amount

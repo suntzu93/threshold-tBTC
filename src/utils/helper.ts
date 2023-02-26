@@ -132,7 +132,6 @@ export function getOrCreateOperator(address: Address): Operator {
         operator.poolRewardBanDuration = constants.ZERO_BI;
         operator.beaconGroupCount = 0;
         operator.events = [];
-        operator.groups = [];
     }
     return operator as Operator;
 }

@@ -45,6 +45,11 @@ export function calculateRedemptionKey(redeemerOutputScript: ByteArray, walletPu
     return hashArray;
 }
 
+export function keccak256TwoString(first: string,second:string): string{
+    let hashData = Bytes.fromHexString(first).concat(Bytes.fromHexString(second));
+    return crypto.keccak256(hashData).toHexString();
+}
+
 export function bytesToUint8Array(bytes: Bytes): Uint8Array {
     let uint8Array = new Uint8Array(bytes.length)
     for (let i = 0; i < bytes.length; i++) {
