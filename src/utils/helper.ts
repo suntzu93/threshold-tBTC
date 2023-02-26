@@ -11,7 +11,7 @@ import {
     StatusRecord
 } from "../../generated/schema"
 import * as constants from "./constants"
-import {ADDRESS_TBTC, ADDRESS_ZERO} from "./constants";
+import * as Utils from "./utils"
 
 
 export function getOrCreateTransaction(id: Bytes): Transaction {
@@ -81,10 +81,11 @@ export function getOrCreateTbtcToken(): TBTCToken {
 }
 
 export function getOrCreateOperatorEvent(event: ethereum.Event, status: string): Event {
-    let eventEntity = Event.load(event.transaction.hash.toHex());
+    let eventEntity = Event.load(Utils.getIDFromEvent(event));
     if (!eventEntity) {
-        eventEntity = new Event(event.transaction.hash.toHex());
+        eventEntity = new Event(Utils.getIDFromEvent(event));
         eventEntity.from = event.transaction.from;
+        eventEntity.txHash = event.transaction.hash;
         eventEntity.to = event.transaction.to;
         eventEntity.timestamp = event.block.timestamp;
         eventEntity.event = status;

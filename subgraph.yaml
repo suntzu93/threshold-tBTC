@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: Bridge
-    network: mainnet
+    network: goerli
     source:
       abi: Bridge
-      address: "0x5e4861a80B55f035D899f66772117F00FA0E8e7B"
-      startBlock: 16397413
+      address: "0x0Cad3257C4B7ec6de1f6926Fbf5714255a6632c3"
+      startBlock: 8364954
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -92,11 +92,11 @@ dataSources:
       file: ./src/mappingBridge.ts
   - kind: ethereum
     name: TBTCVault
-    network: mainnet
+    network: goerli
     source:
       abi: TBTCVault
-      address: "0x9C070027cdC9dc8F82416B2e5314E11DFb4FE3CD"
-      startBlock: 16472741
+      address: "0x65eB0562FCe858f8328858c76E689aBedB78621F"
+      startBlock: 8364960
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -122,11 +122,11 @@ dataSources:
       file: ./src/mappingTBTCVault.ts
   - kind: ethereum
     name: TBTC
-    network: mainnet
+    network: goerli
     source:
       abi: TBTC
-      address: "0x18084fbA666a33d37592fA2633fD49a74DD93a88"
-      startBlock: 13042356
+      address: "0x679874fbe6d4e7cc54a59e315ff1eb266686a937"
+      startBlock: 8364943
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -142,11 +142,11 @@ dataSources:
       file: ./src/mappingTBTCToken.ts
   - kind: ethereum
     name: TokenStaking
-    network: mainnet
+    network: goerli
     source:
       abi: TokenStaking
-      address: "0x01B67b1194C75264d06F808A921228a95C765dd7"
-      startBlock: 15440641
+      address: "0x1da5d88C26EA4f87b5e09C3452eE2384Ee20DC75"
+      startBlock: 7681424
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -176,11 +176,11 @@ dataSources:
       file: ./src/mappingTokenStaking.ts
   - kind: ethereum
     name: RandomBeacon
-    network: mainnet
+    network: goerli
     source:
       abi: RandomBeacon
-      address: "0x5499f54b4A1CB4816eefCf78962040461be3D80b"
-      startBlock: 15638933
+      address: "0xF177CfA720ceC42841c04A458f6c68e1243C1b49"
+      startBlock: 8364724
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -263,11 +263,11 @@ dataSources:
       file: ./src/mappingRandomBeacon.ts
   - kind: ethereum
     name: SortitionPool
-    network: mainnet
+    network: goerli
     source:
       abi: SortitionPool
-      address: "0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6"
-      startBlock: 15638881
+      address: "0x3FC63cDBC1fc82F6aDb82d3dEAF7c31723961540"
+      startBlock: 8364710
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -296,3 +296,26 @@ dataSources:
         - event: RewardEligibilityRestored(indexed address,indexed uint32)
           handler: handleRewardEligibilityRestored
       file: ./src/mappingSortitionPool.ts
+  - kind: ethereum
+    name: SimplePREApplication
+    network: goerli
+    source:
+      abi: SimplePREApplication
+      address: "0x7e01c9c03fd3737294dbd7630a34845b0f70e5dd"
+      startBlock: 8364954
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - OperatorBonded
+        - OperatorConfirmed
+      abis:
+        - name: SimplePREApplication
+          file: ./abis/SimplePREApplication.json
+      eventHandlers:
+        - event: OperatorBonded(indexed address,indexed address,uint256)
+          handler: handleOperatorBonded
+        - event: OperatorConfirmed(indexed address,indexed address)
+          handler: handleOperatorConfirmed
+      file: ./src/mappingSimplePreApplication.ts

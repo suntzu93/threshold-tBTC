@@ -96,6 +96,7 @@ enum TransactionEvent {
     DECREASE_AUTHORIZED_RANDOM_BEACON,
     DECREASE_AUTHORIZED_TBTC,
     REGISTERED_OPERATOR,
+    BOND_OPERATOR,
     JOINED_SORTITION_POOL,
     SLASHED,
     WITHDRAW_REWARD
@@ -104,6 +105,7 @@ enum TransactionEvent {
 type Event @entity {
     #Hash of transaction
     id: ID!
+    txHash: Bytes!
     timestamp: BigInt!
     from: Bytes!
     to: Bytes

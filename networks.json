@@ -23,6 +23,10 @@
     "SortitionPool": {
       "address": "0x3FC63cDBC1fc82F6aDb82d3dEAF7c31723961540",
       "startBlock": 8364710
+    },
+    "SimplePREApplication": {
+      "address": "0x829fdCDf6Be747FEA37518fBd83dF70EE371fCf2",
+      "startBlock": 8364954
     }
   },
   "mainnet": {
@@ -44,11 +48,15 @@
     },
     "TokenStaking": {
       "address": "0x01B67b1194C75264d06F808A921228a95C765dd7",
-      "startBlock": 15440641
+      "startBlock": 14113768
     },
     "SortitionPool": {
       "address": "0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6",
       "startBlock": 15638881
+    },
+    "SimplePREApplication": {
+      "address": "0x7e01c9c03fd3737294dbd7630a34845b0f70e5dd",
+      "startBlock": 14141140
     }
   }
 }

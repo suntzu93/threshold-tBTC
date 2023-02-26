@@ -1,8 +1,7 @@
-import {Address, BigInt} from "@graphprotocol/graph-ts"
+import {BigInt} from "@graphprotocol/graph-ts"
 import {
     AuthorizationDecreaseRequested,
     AuthorizationIncreased,
-    NotifierRewarded,
     OwnerRefreshed,
     Staked,
     TokensSeized,
@@ -18,7 +17,6 @@ import {
 } from "./utils/helper"
 
 import * as Const from "./utils/constants"
-import * as Utils from "./utils/utils"
 
 export function handleAuthorizationDecreaseRequested(
     event: AuthorizationDecreaseRequested

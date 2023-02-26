@@ -176,15 +176,6 @@ export function handleInactivityClaimed(event: InactivityClaimed): void {
 export function handleOperatorJoinedSortitionPool(
     event: OperatorJoinedSortitionPool
 ): void {
-    log.warning("thanhlv2 handleOperatorJoinedSortitionPool " +
-        "tx = {}, " +
-        "stakingProvider = {}," +
-        "operator = {}", [
-        event.transaction.hash.toHexString(),
-        event.params.stakingProvider.toHex(),
-        event.params.operator.toHex()
-    ])
-
     let eventEntity = getOrCreateOperatorEvent(event, "JOINED_SORTITION_POOL");
     eventEntity.save()
     let operator = getOrCreateOperator(event.params.stakingProvider);
@@ -194,26 +185,28 @@ export function handleOperatorJoinedSortitionPool(
     operator.save();
 }
 
+/**
+ * stakingProvider = msg.owner
+ * source : https://github.com/keep-network/keep-core/blob/b95b8f487e5474659efb8f85e567a6f06a7f0c80/solidity/random-beacon/contracts/libraries/BeaconAuthorization.sol
+ *
+ * This is confusing, if one wallet staking with another stakingProvider
+ * then stakingProvider != msg.owner does.
+ *
+ * @param event
+ */
 export function handleOperatorRegistered(event: OperatorRegistered): void {
-    log.warning("thanhlv2 handleOperatorRegistered " +
-        "tx = {}, " +
-        "stakingProvider = {}," +
-        "operator = {}", [
-        event.transaction.hash.toHexString(),
-        event.params.stakingProvider.toHex(),
-        event.params.operator.toHex()
-    ])
-
-    let eventEntity = getOrCreateOperatorEvent(event, "REGISTERED_OPERATOR")
-    eventEntity.save()
-
     let operator = getOrCreateOperator(event.params.stakingProvider)
-    operator.address = event.params.operator
-    operator.isRegisteredOperatorAddress = true
-    let events = operator.events
-    events.push(eventEntity.id)
-    operator.events = events
-    operator.save();
+    if (operator.stakedAt != Const.ZERO_BI && operator.stakedAmount != Const.ZERO_BI){
+        let eventEntity = getOrCreateOperatorEvent(event, "REGISTERED_OPERATOR")
+        eventEntity.save()
+
+        operator.address = event.params.operator
+        operator.isRegisteredOperatorAddress = true
+        let events = operator.events
+        events.push(eventEntity.id)
+        operator.events = events
+        operator.save();
+    }
 }
 
 

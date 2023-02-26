@@ -103,10 +103,6 @@ export function getIDFromEvent(event: ethereum.Event): string {
     return event.transaction.hash.toHex() + "-" + event.logIndex.toString()
 }
 
-export function getRelayEntryId(requestId: BigInt): string {
-    return 're_' + requestId.toString()
-}
-
 export function getBeaconGroupId(pubKey: Bytes): string {
     // Cut off the group pub key, we don't want the ids to to be unreasonably long.
     return pubKey.toHexString().slice(0, 62)
