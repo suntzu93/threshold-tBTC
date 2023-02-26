@@ -25,7 +25,7 @@ export const RANDOM_BEACON_ADDR = dataSource.network() == "goerli" ? Address.fro
 export const TBTC_AUTH_ADDR = dataSource.network() == "goerli" ? Address.fromString(
     '0x0f0E2afF99A55B11026Fb270A05f04d37724dE86',
 ) : Address.fromString(
-    '0x01B67b1194C75264d06F808A921228a95C765dd7',
+    '0x46d52e41c2f300bc82217ce22b920c34995204eb',
 );
 
 
