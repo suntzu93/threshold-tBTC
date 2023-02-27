@@ -187,42 +187,19 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - DkgResultSubmitted
-        - DkgSeedTimedOut
-        - DkgStarted
-        - DkgStateLocked
-        - DkgTimedOut
-        - GasParametersUpdated
-        - GovernanceTransferred
-        - GroupCreationParametersUpdated
-        - GroupRegistered
-        - InactivityClaimed
-        - InvoluntaryAuthorizationDecreaseFailed
-        - OperatorJoinedSortitionPool
-        - OperatorRegistered
-        - OperatorStatusUpdated
-        - ReimbursementPoolUpdated
-        - RelayEntryDelaySlashed
-        - RelayEntryDelaySlashingFailed
-        - RelayEntryParametersUpdated
-        - RelayEntryRequested
-        - RelayEntrySubmitted
-        - RelayEntryTimedOut
-        - RelayEntryTimeoutSlashed
-        - RelayEntryTimeoutSlashingFailed
-        - RequesterAuthorizationUpdated
-        - RewardParametersUpdated
-        - RewardsWithdrawn
-        - SlashingParametersUpdated
-        - UnauthorizedSigningSlashed
-        - UnauthorizedSigningSlashingFailed
       abis:
         - name: RandomBeacon
           file: ./abis/RandomBeacon.json
+        - name: SortitionPool
+          file: ./abis/SortitionPool.json
       eventHandlers:
+        - event: AuthorizationDecreaseRequested(indexed address,indexed
+            address,uint96,uint96,uint64)
+          handler: handleAuthorizationDecreaseRequested
+        - event: AuthorizationIncreased(indexed address,indexed address,uint96,uint96)
+          handler: handleAuthorizationIncreased
         - event: DkgMaliciousResultSlashed(indexed bytes32,uint256,address)
           handler: handleDkgMaliciousResultSlashed
-        - event: DkgMaliciousResultSlashingFailed(indexed bytes32,uint256,address)
-          handler: handleDkgMaliciousResultSlashingFailed
         - event: DkgResultApproved(indexed bytes32,indexed address)
           handler: handleDkgResultApproved
         - event: DkgResultChallenged(indexed bytes32,indexed address,string)
@@ -236,6 +213,8 @@ dataSources:
           handler: handleDkgStarted
         - event: DkgStateLocked()
           handler: handleDkgStateLocked
+        - event: DkgTimedOut()
+          handler: handleDkgTimedOut
         - event: GovernanceTransferred(address,address)
           handler: handleGovernanceTransferred
         - event: GroupRegistered(indexed uint64,indexed bytes)
@@ -301,7 +280,7 @@ dataSources:
     network: goerli
     source:
       abi: SimplePREApplication
-      address: "0x7e01c9c03fd3737294dbd7630a34845b0f70e5dd"
+      address: "0x829fdCDf6Be747FEA37518fBd83dF70EE371fCf2"
       startBlock: 8364954
     mapping:
       kind: ethereum/events
@@ -319,3 +298,55 @@ dataSources:
         - event: OperatorConfirmed(indexed address,indexed address)
           handler: handleOperatorConfirmed
       file: ./src/mappingSimplePreApplication.ts
+  - kind: ethereum
+    name: WalletRegistry
+    network: goerli
+    source:
+      abi: WalletRegistry
+      address: "0x0f0E2afF99A55B11026Fb270A05f04d37724dE86"
+      startBlock: 8364851
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - AuthorizationDecreaseApproved
+      abis:
+        - name: WalletRegistry
+          file: ./abis/WalletRegistry.json
+        - name: SortitionPool
+          file: ./abis/SortitionPool.json
+      eventHandlers:
+        - event: AuthorizationDecreaseRequested(indexed address,indexed
+            address,uint96,uint96,uint64)
+          handler: handleAuthorizationDecreaseRequested
+        - event: AuthorizationIncreased(indexed address,indexed address,uint96,uint96)
+          handler: handleAuthorizationIncreased
+        - event: DkgMaliciousResultSlashed(indexed bytes32,uint256,address)
+          handler: handleDkgMaliciousResultSlashed
+        - event: DkgResultApproved(indexed bytes32,indexed address)
+          handler: handleDkgResultApproved
+        - event: DkgResultChallenged(indexed bytes32,indexed address,string)
+          handler: handleDkgResultChallenged
+        - event: DkgResultSubmitted(indexed bytes32,indexed
+            uint256,(uint256,bytes,uint8[],bytes,uint256[],uint32[],bytes32))
+          handler: handleDkgResultSubmitted
+        - event: DkgTimedOut()
+          handler: handleDkgTimedOut
+        - event: DkgStarted(indexed uint256)
+          handler: handleDkgStarted
+        - event: DkgStateLocked()
+          handler: handleDkgStateLocked
+        - event: DkgSeedTimedOut()
+          handler: handleDkgSeedTimedOut
+        - event: InactivityClaimed(indexed bytes32,uint256,address)
+          handler: handleInactivityClaimed
+        - event: OperatorJoinedSortitionPool(indexed address,indexed address)
+          handler: handleOperatorJoinedSortitionPool
+        - event: OperatorRegistered(indexed address,indexed address)
+          handler: handleOperatorRegistered
+        - event: RewardsWithdrawn(indexed address,uint96)
+          handler: handleRewardsWithdrawn
+        - event: WalletOwnerUpdated(address)
+          handler: handleWalletOwnerUpdated
+      file: ./src/mappingWalletRegistry.ts

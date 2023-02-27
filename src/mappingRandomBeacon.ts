@@ -2,11 +2,11 @@ import {Address, BigInt, Bytes, ethereum} from "@graphprotocol/graph-ts"
 import {
     RandomBeacon,
     DkgMaliciousResultSlashed,
-    DkgMaliciousResultSlashingFailed,
     DkgResultApproved,
     DkgResultChallenged,
     DkgResultSubmitted,
     DkgSeedTimedOut,
+    DkgTimedOut,
     DkgStarted,
     DkgStateLocked,
     GovernanceTransferred,
@@ -21,6 +21,8 @@ import {
     RelayEntryTimeoutSlashed,
     RewardsWithdrawn,
     UnauthorizedSigningSlashed,
+    AuthorizationDecreaseRequested,
+    AuthorizationIncreased
 } from "../generated/RandomBeacon/RandomBeacon"
 
 import {
@@ -34,58 +36,91 @@ import {
     getOrCreateOperator,
     getStats,
     getOrCreateOperatorEvent,
-    getStatus
+    getStatus, getOrCreateRandomBeaconGroup
 } from "./utils/helper"
 
 import * as Const from "./utils/constants"
 import {getBeaconGroupId, keccak256TwoString} from "./utils/utils";
+
+export function handleAuthorizationDecreaseRequested(
+    event: AuthorizationDecreaseRequested
+): void {
+    let operator = getOrCreateOperator(event.params.stakingProvider);
+    operator.randomBeaconAuthorizedAmount = event.params.toAmount;
+    //minimum to authorize is 40k
+    if (event.params.toAmount.le(BigInt.fromI32(40000 * 10 ^ 18))) {
+        operator.randomBeaconAuthorized = false;
+    }
+
+    let eventEntity = getOrCreateOperatorEvent(event, "DECREASE_AUTHORIZED_RANDOM_BEACON")
+    eventEntity.amount = event.params.fromAmount.minus(event.params.toAmount)
+    eventEntity.save()
+    //Add event info into operator
+    let events = operator.events
+    events.push(eventEntity.id)
+    operator.events = events
+    operator.save();
+
+    let stats = getStats();
+    stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.minus(event.params.toAmount);
+    stats.save()
+}
+
+export function handleAuthorizationIncreased(
+    event: AuthorizationIncreased
+): void {
+    let eventEntity = getOrCreateOperatorEvent(event, "AUTHORIZED_RANDOM_BEACON")
+    eventEntity.amount = event.params.toAmount.minus(event.params.fromAmount)
+    eventEntity.save()
+
+    let operator = getOrCreateOperator(event.params.stakingProvider);
+    operator.randomBeaconAuthorized = true;
+    operator.randomBeaconAuthorizedAmount = event.params.toAmount;
+    //Add event info into operator
+    let events = operator.events
+    events.push(eventEntity.id)
+    operator.events = events
+    operator.save();
+
+    let stats = getStats();
+    stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.plus(event.params.toAmount);
+    stats.save()
+}
 
 export function handleDkgMaliciousResultSlashed(
     event: DkgMaliciousResultSlashed
 ): void {
 }
 
-export function handleDkgMaliciousResultSlashingFailed(
-    event: DkgMaliciousResultSlashingFailed
-): void {
+export function handleDkgResultChallenged(event: DkgResultChallenged): void {
+    let status = getStatus();
+    status.groupState = "AWAITING_RESULT"
+    status.challenger = event.params.challenger
+    status.reason = event.params.reason
+    status.save()
 }
 
 export function handleDkgResultApproved(event: DkgResultApproved): void {
+    let status = getStatus();
+    status.groupState = "IDLE"
+    status.save()
 }
 
-export function handleDkgResultChallenged(event: DkgResultChallenged): void {
+export function handleDkgTimedOut(event: DkgTimedOut): void {
+    let status = getStatus();
+    status.groupState = "IDLE"
+    status.save()
 }
 
 /**
  * Event: DkgResultSubmitted
  *
- * Emitted when submitDkgResult() is called. Complete the group creation process.
+ * Emitted when submitDkgResult() is called. Complete the wallet creation process.
  */
 export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
-    log.warning("thanhlv2 handleDkgResultSubmitted " +
-        "tx = {}, " +
-        "resultHash = {}," +
-        "seed = {} , " +
-        "submitterMemberIndex = {} , " +
-        "groupPubKey = {}, " +
-        "misbehavedMembersIndices = {}," +
-        "signatures={}," +
-        "signingMembersIndices ={}," +
-        "members={}," +
-        "membersHash={}", [
-        event.transaction.hash.toHexString(),
-        event.params.resultHash.toHexString(),
-        event.params.seed.toString(),
-        event.params.result.submitterMemberIndex.toString(),
-        event.params.result.groupPubKey.toHexString(),
-        event.params.result.misbehavedMembersIndices.toString(),
-        event.params.result.signatures.toHexString(),
-        event.params.result.signingMembersIndices.toString(),
-        event.params.result.members.toString(),
-        event.params.result.membersHash.toHexString()
-    ])
-
-    let group = RandomBeaconGroup.load(getBeaconGroupId(event.params.result.groupPubKey))!;
+    // let group = RandomBeaconGroup.load(getBeaconGroupId(event.params.result.groupPubKey))!;
+    let group = getOrCreateRandomBeaconGroup(getBeaconGroupId(event.params.result.groupPubKey));
+    group.createdAt = event.block.timestamp
 
     let memberIds = event.params.result.members;
 
@@ -125,15 +160,29 @@ export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
     group.uniqueMemberCount = uniqueAddresses.length
     group.size = members.length;
     group.save()
+
+    let status = getStatus();
+    status.groupState = "CHALLENGE"
+    status.save()
+
 }
 
 export function handleDkgSeedTimedOut(event: DkgSeedTimedOut): void {
+    let status = getStatus();
+    status.groupState = "IDLE"
+    status.save()
 }
 
 export function handleDkgStarted(event: DkgStarted): void {
+    let status = getStatus();
+    status.groupState = "KEY_GENERATION"
+    status.save()
 }
 
 export function handleDkgStateLocked(event: DkgStateLocked): void {
+    let status = getStatus();
+    status.groupState = "AWAITING_SEED"
+    status.save()
 }
 
 
@@ -151,11 +200,10 @@ export function handleGroupRegistered(event: GroupRegistered): void {
         event.params.groupId.toString(),
         event.params.groupPubKey.toHex()
     ])
-    let group = new RandomBeaconGroup(getBeaconGroupId(event.params.groupPubKey));
+    let group = getOrCreateRandomBeaconGroup(getBeaconGroupId(event.params.groupPubKey));
     group.createdAt = event.block.timestamp
-    group.totalSlashedAmount = Const.ZERO_BI;
-    group.size = 0
-    group.uniqueMemberCount = 0
+    group.createdAtBlock = event.block.number
+    group.terminated = false
     group.save()
 
     let groupId = event.params.groupId.toString()
@@ -164,12 +212,16 @@ export function handleGroupRegistered(event: GroupRegistered): void {
         groupPubKey = new GroupPublicKey(groupId)
     }
     groupPubKey.group = group.id;
-    groupPubKey.terminated = false
     groupPubKey.pubKey = event.params.groupPubKey
     groupPubKey.save()
 }
 
 export function handleInactivityClaimed(event: InactivityClaimed): void {
+    let groupPubKey = GroupPublicKey.load(event.params.groupId.toString())!
+    let group = RandomBeaconGroup.load(groupPubKey.group)!
+    group.nonce = event.params.nonce
+    group.notifier = event.params.notifier
+    group.save()
 }
 
 
@@ -196,12 +248,12 @@ export function handleOperatorJoinedSortitionPool(
  */
 export function handleOperatorRegistered(event: OperatorRegistered): void {
     let operator = getOrCreateOperator(event.params.stakingProvider)
-    if (operator.stakedAt != Const.ZERO_BI && operator.stakedAmount != Const.ZERO_BI){
+    if (operator.stakedAt != Const.ZERO_BI && operator.stakedAmount != Const.ZERO_BI) {
         let eventEntity = getOrCreateOperatorEvent(event, "REGISTERED_OPERATOR")
         eventEntity.save()
 
         operator.address = event.params.operator
-        operator.isRegisteredOperatorAddress = true
+        operator.registeredOperatorAddress += 1
         let events = operator.events
         events.push(eventEntity.id)
         operator.events = events
@@ -223,6 +275,7 @@ export function handleRelayEntryRequested(event: RelayEntryRequested): void {
     entry.requestedAt = event.block.timestamp;
     entry.requestedBy = event.transaction.from;
     entry.group = getBeaconGroupId(pubKey)
+    entry.isInProgress = true
     entry.save();
 
 }
@@ -238,6 +291,7 @@ export function handleRelayEntrySubmitted(event: RelayEntrySubmitted): void {
     let entry = RelayEntry.load(event.params.requestId.toString())!;
     entry.value = event.params.entry;
     entry.submittedAt = event.block.timestamp;
+    entry.isInProgress = false
     entry.save();
 
     let randomContract = RandomBeacon.bind(event.address);
@@ -262,7 +316,9 @@ export function handleRelayEntryTimedOut(event: RelayEntryTimedOut): void {
 
     let groupPubKey = GroupPublicKey.load(event.params.terminatedGroupId.toString())
     if (groupPubKey) {
-        groupPubKey.terminated = true;
+        let group = RandomBeaconGroup.load(groupPubKey.group)!
+        group.terminated = true
+        group.save()
         groupPubKey.save()
     }
 }
@@ -289,6 +345,16 @@ function slashOperators(groupMembers: Array<Address>, amount: BigInt, event: eth
 export function handleRelayEntryTimeoutSlashed(
     event: RelayEntryTimeoutSlashed
 ): void {
+    let entry = RelayEntry.load(event.params.requestId.toString())!;
+    entry.isInProgress = false
+    entry.save()
+
+    let group = RandomBeaconGroup.load(entry.group)!;
+    group.misbehavedCount += 1;
+    group.terminated = true;
+    group.totalSlashedAmount = group.totalSlashedAmount.plus(event.params.slashingAmount);
+    group.save()
+
     slashOperators(event.params.groupMembers, event.params.slashingAmount, event);
 }
 
@@ -296,6 +362,15 @@ export function handleRelayEntryTimeoutSlashed(
 export function handleRelayEntryDelaySlashed(
     event: RelayEntryDelaySlashed
 ): void {
+    let entry = RelayEntry.load(event.params.requestId.toString())!;
+    entry.isInProgress = false
+    entry.save()
+    let group = RandomBeaconGroup.load(entry.group)!;
+    group.misbehavedCount += 1;
+    group.terminated = true;
+    group.totalSlashedAmount = group.totalSlashedAmount.plus(event.params.slashingAmount);
+    group.save()
+
     slashOperators(event.params.groupMembers, event.params.slashingAmount, event);
 }
 
@@ -309,6 +384,7 @@ export function handleUnauthorizedSigningSlashed(
     let group = RandomBeaconGroup.load(getBeaconGroupId(groupPubKey.pubKey))!;
     group.misbehavedCount += 1;
     group.totalSlashedAmount = group.totalSlashedAmount.plus(slashingAmount);
+    group.terminated = true;
     group.save()
 
     slashOperators(event.params.groupMembers, slashingAmount, event);

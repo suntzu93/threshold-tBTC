@@ -110,6 +110,7 @@ type Event @entity {
     from: Bytes!
     to: Bytes
     amount: BigInt!
+    isRandomBeaconEvent: Boolean!
     event: TransactionEvent!
     operator: [Operator!] @derivedFrom(field: "events")
 }
@@ -120,12 +121,13 @@ type GroupPublicKey @entity {
     # Group public key
     pubKey: Bytes!
     group : RandomBeaconGroup!
-    terminated: Boolean!
+
 }
 
 type RandomBeaconGroup @entity {
     id: ID!
     createdAt: BigInt!
+    createdAtBlock: BigInt!
 
     groupPublicKey: GroupPublicKey! @derivedFrom(field: "group")
     memberships: [RandomBeaconGroupMembership!]! @derivedFrom(field: "group")
@@ -136,6 +138,10 @@ type RandomBeaconGroup @entity {
     "Total fault."
     misbehavedCount: Int!
     totalSlashedAmount: BigInt!
+    terminated: Boolean!
+
+    nonce: BigInt!
+    notifier : Bytes
 
     relayEntries: [RelayEntry!]! @derivedFrom(field: "group")
 }
@@ -165,7 +171,7 @@ type RelayEntry @entity {
 
     value: Bytes
     submittedAt: BigInt
-
+    isInProgress: Boolean!
 }
 
 type Operator @entity {
@@ -173,7 +179,7 @@ type Operator @entity {
     id: ID!
     #Operator address
     address: Bytes!
-    isRegisteredOperatorAddress: Boolean!
+    registeredOperatorAddress: Int!
 
     "When this operator had a stake delegated to them. This is like a createdAt, and the operation also assigns the beneficiary/authorizer roles."
     stakedAt: BigInt!
@@ -200,6 +206,7 @@ type Operator @entity {
     "The reward available to withdraw."
     availableReward: BigInt!
 
+
     "How often this operator was involved in a fault."
     misbehavedCount: Int!
     totalSlashedAmount: BigInt!
@@ -209,6 +216,23 @@ type Operator @entity {
 
     beaconGroupCount: Int!
     events: [Event!]!
+}
+
+enum State {
+    "Group creation is not in progress. It is a state set after group creation completion either by timeout or by a result approval."
+    IDLE,
+    "Group creation is awaiting the seed and sortition pool is locked."
+    AWAITING_SEED,
+    "Off-chain DKG protocol execution is in progress. A result is being calculated by the clients in this state. It's not yet possible to submit the result."
+    KEY_GENERATION,
+    """ After off-chain DKG protocol execution the contract awaits result submission.
+    This is a state to which group creation returns in case of a result
+    challenge notification."""
+    AWAITING_RESULT,
+    """DKG result was submitted and awaits an approval or a challenge. If a result
+    gets challenge the state returns to `AWAITING_RESULT`. If a result gets
+    approval the state changes to `IDLE`."""
+    CHALLENGE
 }
 
 """
@@ -231,5 +255,8 @@ type StatusRecord @entity {
     id: ID!
 
     "The currently requested RandomBeacon relay entry, if any. Only a single request can exist at a time."
-    currentRequestedRelayEntry: RelayEntry
+    groupState: State!
+    ecdsaState: State!
+    challenger: Bytes
+    reason: String
 }

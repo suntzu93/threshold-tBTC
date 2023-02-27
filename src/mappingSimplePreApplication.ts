@@ -17,7 +17,7 @@ export function handleOperatorBonded(event: OperatorBonded): void {
 
     let operator = getOrCreateOperator(event.params.stakingProvider)
     operator.address = event.params.operator
-    operator.isRegisteredOperatorAddress = true
+    operator.registeredOperatorAddress = 2
     let events = operator.events
     events.push(eventEntity.id)
     operator.events = events

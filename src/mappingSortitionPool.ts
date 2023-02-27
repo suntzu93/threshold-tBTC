@@ -41,6 +41,7 @@ export function handleIneligibleForRewards(
     let memberAddresses = sortitionContract.getIDOperators(memberIds);
     for (let i = 0; i < memberAddresses.length; i++) {
         let operator = getOrCreateOperator(memberAddresses[i]);
+        operator.availableReward = sortitionContract.getAvailableRewards(memberAddresses[i]);
         operator.misbehavedCount += 1;
         operator.poolRewardBanDuration = event.params.until;
         operator.save()
@@ -57,7 +58,6 @@ export function handleRewardEligibilityRestored(
     event: RewardEligibilityRestoredEvent
 ): void {
     let operator = getOrCreateOperator(event.params.operator);
-    operator.misbehavedCount += 1;
     operator.poolRewardBanDuration = Const.ZERO_BI;
     operator.save()
 }

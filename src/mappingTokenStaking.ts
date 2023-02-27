@@ -21,71 +21,39 @@ import * as Const from "./utils/constants"
 export function handleAuthorizationDecreaseRequested(
     event: AuthorizationDecreaseRequested
 ): void {
-    let operator = getOrCreateOperator(event.params.stakingProvider);
-    let eventType = "";
-    let stats = getStats();
-    if (event.params.application == Const.RANDOM_BEACON_ADDR) {
-        operator.randomBeaconAuthorizedAmount = event.params.toAmount;
-        stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.minus(event.params.toAmount);
-        //minimum to authorize is 40k
-        if (event.params.toAmount.le(BigInt.fromI32(40000 * 10 ^ 18))) {
-            operator.randomBeaconAuthorized = false;
-        }
-        eventType = "DECREASE_AUTHORIZED_RANDOM_BEACON"
-    } else if (event.params.application == Const.TBTC_AUTH_ADDR) {
-        operator.tBTCAuthorizedAmount = event.params.toAmount;
-        stats.totalTBTCAuthorizedAmount = stats.totalTBTCAuthorizedAmount.minus(event.params.toAmount);
-        //minimum to authorize is 40k
-        if (event.params.toAmount.le(BigInt.fromI32(40000 * 10 ^ 18))) {
-            operator.tBTCAuthorized = false;
-        }
-        eventType = "DECREASE_AUTHORIZED_TBTC"
-    }
-
-    stats.save()
-    if (eventType.length > 0) {
-        let eventEntity = getOrCreateOperatorEvent(event, eventType)
-        eventEntity.amount = event.params.fromAmount.minus(event.params.toAmount)
-        eventEntity.save()
-        //Add event info into operator
-        let events = operator.events
-        events.push(eventEntity.id)
-        operator.events = events
-        operator.save();
-    }
 
 }
 
 export function handleAuthorizationIncreased(
     event: AuthorizationIncreased
 ): void {
-    let eventType = "";
-    let operator = getOrCreateOperator(event.params.stakingProvider);
-    let stats = getStats();
-    if (event.params.application == Const.RANDOM_BEACON_ADDR) {
-        operator.randomBeaconAuthorized = true;
-        eventType = "AUTHORIZED_RANDOM_BEACON";
-        operator.randomBeaconAuthorizedAmount = event.params.toAmount;
-        stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.plus(event.params.toAmount);
-    } else if (event.params.application == Const.TBTC_AUTH_ADDR) {
-        operator.tBTCAuthorized = true;
-        eventType = "AUTHORIZED_TBTC";
-        operator.tBTCAuthorizedAmount = event.params.toAmount;
-        stats.totalTBTCAuthorizedAmount = stats.totalTBTCAuthorizedAmount.plus(event.params.toAmount);
-    }
-    stats.save()
-
-    if (eventType.length > 0) {
-        let eventEntity = getOrCreateOperatorEvent(event, eventType)
-        eventEntity.amount = event.params.toAmount.minus(event.params.fromAmount)
-        eventEntity.save()
-
-        //Add event info into operator
-        let events = operator.events
-        events.push(eventEntity.id)
-        operator.events = events
-        operator.save();
-    }
+    // let eventType = "";
+    // let operator = getOrCreateOperator(event.params.stakingProvider);
+    // let stats = getStats();
+    // if (event.params.application == Const.RANDOM_BEACON_ADDR) {
+    //     operator.randomBeaconAuthorized = true;
+    //     eventType = "AUTHORIZED_RANDOM_BEACON";
+    //     operator.randomBeaconAuthorizedAmount = event.params.toAmount;
+    //     stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.plus(event.params.toAmount);
+    // } else if (event.params.application == Const.TBTC_AUTH_ADDR) {
+    //     operator.tBTCAuthorized = true;
+    //     eventType = "AUTHORIZED_TBTC";
+    //     operator.tBTCAuthorizedAmount = event.params.toAmount;
+    //     stats.totalTBTCAuthorizedAmount = stats.totalTBTCAuthorizedAmount.plus(event.params.toAmount);
+    // }
+    // stats.save()
+    //
+    // if (eventType.length > 0) {
+    //     let eventEntity = getOrCreateOperatorEvent(event, eventType)
+    //     eventEntity.amount = event.params.toAmount.minus(event.params.fromAmount)
+    //     eventEntity.save()
+    //
+    //     //Add event info into operator
+    //     let events = operator.events
+    //     events.push(eventEntity.id)
+    //     operator.events = events
+    //     operator.save();
+    // }
 
 }
 

@@ -8,10 +8,11 @@ import {
     TBTCToken,
     Operator,
     StatsRecord,
-    StatusRecord
+    StatusRecord, RandomBeaconGroup
 } from "../../generated/schema"
 import * as constants from "./constants"
 import * as Utils from "./utils"
+import * as Const from "./constants";
 
 
 export function getOrCreateTransaction(id: Bytes): Transaction {
@@ -90,6 +91,7 @@ export function getOrCreateOperatorEvent(event: ethereum.Event, status: string):
         eventEntity.timestamp = event.block.timestamp;
         eventEntity.event = status;
         eventEntity.amount = constants.ZERO_BI;
+        eventEntity.isRandomBeaconEvent = true;
     }
     return eventEntity as Event;
 }
@@ -106,10 +108,11 @@ export function getStats(): StatsRecord {
 }
 
 export function getStatus(): StatusRecord {
-    let stats = StatusRecord.load("current");
+    let stats = StatusRecord.load("status");
     if (stats == null) {
-        stats = new StatusRecord("current")
-        stats.currentRequestedRelayEntry = null;
+        stats = new StatusRecord("status")
+        stats.groupState = "IDLE"
+        stats.ecdsaState = "IDLE"
     }
     return stats as StatusRecord;
 }
@@ -119,7 +122,7 @@ export function getOrCreateOperator(address: Address): Operator {
     if (!operator) {
         operator = new Operator(address.toHexString());
         operator.address = constants.ADDRESS_ZERO;
-        operator.isRegisteredOperatorAddress = false;
+        operator.registeredOperatorAddress = 0;
         operator.stakedAt = constants.ZERO_BI;
         operator.stakeType = 0;
         operator.randomBeaconAuthorized = false;
@@ -136,4 +139,20 @@ export function getOrCreateOperator(address: Address): Operator {
         operator.events = [];
     }
     return operator as Operator;
+}
+
+export function getOrCreateRandomBeaconGroup(id: string): RandomBeaconGroup {
+    let group = RandomBeaconGroup.load(id)
+    if (group == null) {
+        group = new RandomBeaconGroup(id)
+        group.createdAt = Const.ZERO_BI
+        group.totalSlashedAmount = Const.ZERO_BI
+        group.size = 0
+        group.uniqueMemberCount = 0
+        group.nonce = Const.ZERO_BI
+        group.misbehavedCount = 0
+        group.totalSlashedAmount = Const.ZERO_BI
+        group.terminated = false
+    }
+    return group as RandomBeaconGroup;
 }
