@@ -195,14 +195,6 @@ export function handleGovernanceTransferred(
 }
 
 export function handleGroupRegistered(event: GroupRegistered): void {
-    log.warning("thanhlv2 handleGroupRegistered " +
-        "tx = {}, " +
-        "groupId = {}," +
-        "publicKey = {}", [
-        event.transaction.hash.toHexString(),
-        event.params.groupId.toString(),
-        event.params.groupPubKey.toHex()
-    ])
     let group = getOrCreateRandomBeaconGroup(getBeaconGroupId(event.params.groupPubKey));
     group.createdAt = event.block.timestamp
     group.createdAtBlock = event.block.number
@@ -266,12 +258,6 @@ export function handleOperatorRegistered(event: OperatorRegistered): void {
 
 
 export function handleRelayEntryRequested(event: RelayEntryRequested): void {
-    log.warning("thanhlv2 handleRelayEntryRequested tx = {}, requestId = {},groupId = {} , previousEntry={}", [
-        event.transaction.hash.toHexString(),
-        event.params.requestId.toString(),
-        event.params.groupId.toString(),
-        event.params.previousEntry.toHexString(),
-    ])
     let groupPubKey = GroupPublicKey.load(event.params.groupId.toString())!
     let pubKey = groupPubKey.pubKey
     let entry = new RelayEntry(event.params.requestId.toString());
@@ -284,12 +270,6 @@ export function handleRelayEntryRequested(event: RelayEntryRequested): void {
 }
 
 export function handleRelayEntrySubmitted(event: RelayEntrySubmitted): void {
-    log.warning("thanhlv2 handleRelayEntrySubmitted tx = {}, requestId = {},submitter = {} , entry={}", [
-        event.transaction.hash.toHexString(),
-        event.params.requestId.toString(),
-        event.params.submitter.toString(),
-        event.params.entry.toHexString(),
-    ])
     // let status = getStatus();
     let entry = RelayEntry.load(event.params.requestId.toString())!;
     entry.value = event.params.entry;
@@ -311,12 +291,6 @@ export function handleRelayEntrySubmitted(event: RelayEntrySubmitted): void {
 }
 
 export function handleRelayEntryTimedOut(event: RelayEntryTimedOut): void {
-    log.warning("thanhlv2 handleRelayEntryTimedOut tx = {}, requestId = {},terminatedGroupId = {} ", [
-        event.transaction.hash.toHexString(),
-        event.params.requestId.toString(),
-        event.params.terminatedGroupId.toString()
-    ])
-
     let groupPubKey = GroupPublicKey.load(event.params.terminatedGroupId.toString())
     if (groupPubKey) {
         let group = RandomBeaconGroup.load(groupPubKey.group)!
