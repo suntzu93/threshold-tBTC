@@ -146,16 +146,19 @@ export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
 
     for (let i = 0; i < uniqueAddresses.length; i++) {
         let memberAddress = uniqueAddresses[i];
-        let membership = new RandomBeaconGroupMembership(keccak256TwoString(group.id, memberAddress));
+        let stakingProvider = randomBeaconContract.operatorToStakingProvider(Address.fromString(memberAddress));
+        let operator = getOrCreateOperator(stakingProvider);
+        operator.beaconGroupCount += 1;
+        operator.save();
+
+        let membership = new RandomBeaconGroupMembership(keccak256TwoString(group.id, stakingProvider.toHexString()));
         membership.group = group.id;
-        membership.operator = memberAddress;
+        membership.operator = operator.id;
         membership.count = memberCounts.get(memberAddress);
         membership.groupCreatedAt = group.createdAt;
         membership.save()
 
-        let operator = getOrCreateOperator(Address.fromString(memberAddress));
-        operator.beaconGroupCount += 1;
-        operator.save();
+
     }
     group.uniqueMemberCount = uniqueAddresses.length
     group.size = members.length;
