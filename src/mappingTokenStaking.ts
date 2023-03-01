@@ -81,6 +81,10 @@ export function handleStaked(event: Staked): void {
     operator.events = events
 
     operator.save()
+
+    let stats = getStats();
+    stats.totalStaked = stats.totalStaked.plus(event.params.amount);
+    stats.save()
 }
 
 /**
@@ -100,6 +104,10 @@ export function handleTokensSeized(event: TokensSeized): void {
     operator.events = events
 
     operator.save()
+
+    let stats = getStats();
+    stats.totalStaked = stats.totalStaked.minus(event.params.amount);
+    stats.save()
 }
 
 export function handleToppedUp(event: ToppedUp): void {
@@ -113,8 +121,11 @@ export function handleToppedUp(event: ToppedUp): void {
     let events = operator.events
     events.push(eventEntity.id)
     operator.events = events
-
     operator.save()
+
+    let stats = getStats();
+    stats.totalStaked = stats.totalStaked.plus(event.params.amount);
+    stats.save()
 }
 
 export function handleUnstaked(event: Unstaked): void {
@@ -128,6 +139,9 @@ export function handleUnstaked(event: Unstaked): void {
     let events = operator.events
     events.push(eventEntity.id)
     operator.events = events
-
     operator.save()
+
+    let stats = getStats();
+    stats.totalStaked = stats.totalStaked.minus(event.params.amount);
+    stats.save()
 }

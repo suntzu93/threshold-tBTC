@@ -103,6 +103,8 @@ export function getStats(): StatsRecord {
         stats.numOperators = 0;
         stats.totalTBTCAuthorizedAmount = constants.ZERO_BI;
         stats.totalRandomBeaconAuthorizedAmount = constants.ZERO_BI;
+        stats.numOperatorsRegisteredNode = 0;
+        stats.totalStaked = constants.ZERO_BI;
     }
     return stats as StatsRecord;
 }
@@ -153,6 +155,7 @@ export function getOrCreateRandomBeaconGroup(id: string): RandomBeaconGroup {
         group.misbehavedCount = 0
         group.totalSlashedAmount = Const.ZERO_BI
         group.terminated = false
+        group.isWalletRegistry = false
     }
     return group as RandomBeaconGroup;
 }

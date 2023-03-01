@@ -3,8 +3,9 @@ import {
     OperatorConfirmed
 } from "../generated/SimplePREApplication/SimplePREApplication"
 import {
-    getOrCreateOperator, getOrCreateOperatorEvent,
+    getOrCreateOperator, getOrCreateOperatorEvent, getStats,
 } from "./utils/helper"
+import * as constants from "./utils/constants";
 
 /**
  * Registered operator for staking provider on old version
@@ -16,12 +17,18 @@ export function handleOperatorBonded(event: OperatorBonded): void {
     eventEntity.save()
 
     let operator = getOrCreateOperator(event.params.stakingProvider)
-    operator.address = event.params.operator
+    if (operator.address === constants.ADDRESS_ZERO){
+        operator.address = event.params.operator
+    }
     operator.registeredOperatorAddress = 2
     let events = operator.events
     events.push(eventEntity.id)
     operator.events = events
     operator.save();
+
+    let stats = getStats();
+    stats.numOperatorsRegisteredNode += 1
+    stats.save()
 }
 
 export function handleOperatorConfirmed(event: OperatorConfirmed): void {

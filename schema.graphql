@@ -143,6 +143,9 @@ type RandomBeaconGroup @entity {
     nonce: BigInt!
     notifier : Bytes
 
+    "Create from WalletRegistry"
+    isWalletRegistry: Boolean!
+
     relayEntries: [RelayEntry!]! @derivedFrom(field: "group")
 }
 
@@ -155,6 +158,7 @@ type RandomBeaconGroupMembership @entity {
     group: RandomBeaconGroup!
     operator: Operator!
 
+    seats: [Int!]!
     "The same operator can fill multiple membership slots within a group."
     count: Int!
 
@@ -243,10 +247,11 @@ type StatsRecord @entity {
 
     "The total number of stakers with a stake larger than 0."
     numOperators: Int!
-    currentRequestedRelayEntry: BigInt
+    numOperatorsRegisteredNode: Int!
 
     totalTBTCAuthorizedAmount: BigInt!
     totalRandomBeaconAuthorizedAmount: BigInt!
+    totalStaked: BigInt!
 }
 """
 Exposes some global system status data. Only a single record with the id "current" is available.

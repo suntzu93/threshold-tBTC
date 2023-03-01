@@ -61,8 +61,9 @@ export function handleAuthorizationDecreaseRequested(
     operator.events = events
     operator.save();
 
+    let changeAmount = event.params.fromAmount.minus(event.params.toAmount);
     let stats = getStats();
-    stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.minus(event.params.toAmount);
+    stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.minus(changeAmount);
     stats.save()
 }
 
@@ -82,8 +83,9 @@ export function handleAuthorizationIncreased(
     operator.events = events
     operator.save();
 
+    let changeAmount = event.params.toAmount.minus(event.params.fromAmount);
     let stats = getStats();
-    stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.plus(event.params.toAmount);
+    stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.plus(changeAmount);
     stats.save()
 }
 
@@ -120,7 +122,10 @@ export function handleDkgTimedOut(event: DkgTimedOut): void {
 export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
     // let group = RandomBeaconGroup.load(getBeaconGroupId(event.params.result.groupPubKey))!;
     let group = getOrCreateRandomBeaconGroup(getBeaconGroupId(event.params.result.groupPubKey));
-    group.createdAt = event.block.timestamp
+    if (group.createdAt == Const.ZERO_BI) {
+        group.createdAt = event.block.timestamp
+        group.createdAtBlock = event.block.number
+    }
 
     let memberIds = event.params.result.members;
 
@@ -132,15 +137,17 @@ export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
     // Get list members address by member ids
     let members = sortitionPoolContract.getIDOperators(memberIds)
 
-    let memberCounts: Map<string, i32> = new Map();
+    let memberSeats: Map<string, i32[]> = new Map();
     let uniqueAddresses: string[] = []; // Map does not allow us to list entries?
     for (let i = 0; i < members.length; i++) {
         let memberAddress = members[i].toHexString();
-        if (!memberCounts.has(memberAddress)) {
-            memberCounts.set(memberAddress, 1)
+        if (!memberSeats.has(memberAddress)) {
             uniqueAddresses.push(memberAddress);
+            memberSeats.set(memberAddress, [i]);
         } else {
-            memberCounts.set(memberAddress, memberCounts.get(memberAddress) + 1)
+            let existingSeats = memberSeats.get(memberAddress);
+            existingSeats.push(i);
+            memberSeats.set(memberAddress, existingSeats);
         }
     }
 
@@ -154,11 +161,10 @@ export function handleDkgResultSubmitted(event: DkgResultSubmitted): void {
         let membership = new RandomBeaconGroupMembership(keccak256TwoString(group.id, stakingProvider.toHexString()));
         membership.group = group.id;
         membership.operator = operator.id;
-        membership.count = memberCounts.get(memberAddress);
+        membership.count = memberSeats.get(memberAddress).length
         membership.groupCreatedAt = group.createdAt;
+        membership.seats = memberSeats.get(memberAddress)
         membership.save()
-
-
     }
     group.uniqueMemberCount = uniqueAddresses.length
     group.size = members.length;
@@ -253,6 +259,12 @@ export function handleOperatorRegistered(event: OperatorRegistered): void {
         events.push(eventEntity.id)
         operator.events = events
         operator.save();
+
+        if (operator.registeredOperatorAddress >= 2) {
+            let stats = getStats();
+            stats.numOperatorsRegisteredNode += 1
+            stats.save()
+        }
     }
 }
 
