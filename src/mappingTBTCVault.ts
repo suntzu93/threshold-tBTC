@@ -1,4 +1,4 @@
-import {Address, BigInt} from "@graphprotocol/graph-ts";
+import {Address, BigInt} from "@graphprotocol/graph-ts"
 import {
     TBTCVault,
     OptimisticMintingCancelled,
@@ -7,9 +7,9 @@ import {
     OptimisticMintingPaused,
     OptimisticMintingRequested,
     OwnershipTransferred,
-} from "../generated/TBTCVault/TBTCVault";
-import {log, Bytes} from "@graphprotocol/graph-ts";
-import * as Helper from "./utils/helper";
+} from "../generated/TBTCVault/TBTCVault"
+import {log, Bytes} from "@graphprotocol/graph-ts"
+import * as Helper from "./utils/helper"
 import * as Utils from "./utils/utils"
 import * as Const from "./utils/constants"
 
@@ -46,7 +46,7 @@ export function handleOptimisticMintingDebtRepaid(
 export function handleOptimisticMintingFinalized(
     event: OptimisticMintingFinalized
 ): void {
-    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(Utils.convertDepositKeyToHex(event.params.depositKey)));
+    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(Utils.convertDepositKeyToHex(event.params.depositKey)))
     let tBTCVaultContract = TBTCVault.bind(event.address)
 
     let user = Helper.getOrCreateUser(event.params.depositor)
@@ -79,7 +79,7 @@ export function handleOptimisticMintingFinalized(
     // not want to pay the Optimistic Minting fee.
     let optimisticMintFee = feeDivisor.gt(Const.ZERO_BI)
         ? (amountToMint.div(feeDivisor))
-        : Const.ZERO_BI;
+        : Const.ZERO_BI
 
     let transactionEntity = Helper.getOrCreateTransaction(event.transaction.hash)
     transactionEntity.txHash = event.transaction.hash
@@ -119,7 +119,7 @@ export function handleOptimisticMintingRequested(
     transactionEntity.description = "Minting Requested"
     transactionEntity.save()
 
-    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(Utils.convertDepositKeyToHex(event.params.depositKey)));
+    let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(Utils.convertDepositKeyToHex(event.params.depositKey)))
     deposit.status = "SWEPT"
     deposit.updateTimestamp = event.block.timestamp
     let transactions = deposit.transactions

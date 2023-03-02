@@ -27,34 +27,6 @@ export function handleAuthorizationDecreaseRequested(
 export function handleAuthorizationIncreased(
     event: AuthorizationIncreased
 ): void {
-    // let eventType = "";
-    // let operator = getOrCreateOperator(event.params.stakingProvider);
-    // let stats = getStats();
-    // if (event.params.application == Const.RANDOM_BEACON_ADDR) {
-    //     operator.randomBeaconAuthorized = true;
-    //     eventType = "AUTHORIZED_RANDOM_BEACON";
-    //     operator.randomBeaconAuthorizedAmount = event.params.toAmount;
-    //     stats.totalRandomBeaconAuthorizedAmount = stats.totalRandomBeaconAuthorizedAmount.plus(event.params.toAmount);
-    // } else if (event.params.application == Const.TBTC_AUTH_ADDR) {
-    //     operator.tBTCAuthorized = true;
-    //     eventType = "AUTHORIZED_TBTC";
-    //     operator.tBTCAuthorizedAmount = event.params.toAmount;
-    //     stats.totalTBTCAuthorizedAmount = stats.totalTBTCAuthorizedAmount.plus(event.params.toAmount);
-    // }
-    // stats.save()
-    //
-    // if (eventType.length > 0) {
-    //     let eventEntity = getOrCreateOperatorEvent(event, eventType)
-    //     eventEntity.amount = event.params.toAmount.minus(event.params.fromAmount)
-    //     eventEntity.save()
-    //
-    //     //Add event info into operator
-    //     let events = operator.events
-    //     events.push(eventEntity.id)
-    //     operator.events = events
-    //     operator.save();
-    // }
-
 }
 
 export function handleOwnerRefreshed(event: OwnerRefreshed): void {
@@ -82,8 +54,8 @@ export function handleStaked(event: Staked): void {
 
     operator.save()
 
-    let stats = getStats();
-    stats.totalStaked = stats.totalStaked.plus(event.params.amount);
+    let stats = getStats()
+    stats.totalStaked = stats.totalStaked.plus(event.params.amount)
     stats.save()
 }
 
@@ -92,7 +64,7 @@ export function handleStaked(event: Staked): void {
  * @param event
  */
 export function handleTokensSeized(event: TokensSeized): void {
-    let eventEntity = getOrCreateOperatorEvent(event, "SLASHED");
+    let eventEntity = getOrCreateOperatorEvent(event, "SLASHED")
     eventEntity.amount = event.params.amount
     eventEntity.save()
 
@@ -105,13 +77,13 @@ export function handleTokensSeized(event: TokensSeized): void {
 
     operator.save()
 
-    let stats = getStats();
-    stats.totalStaked = stats.totalStaked.minus(event.params.amount);
+    let stats = getStats()
+    stats.totalStaked = stats.totalStaked.minus(event.params.amount)
     stats.save()
 }
 
 export function handleToppedUp(event: ToppedUp): void {
-    let eventEntity = getOrCreateOperatorEvent(event, "TOPUP");
+    let eventEntity = getOrCreateOperatorEvent(event, "TOPUP")
     eventEntity.amount = event.params.amount
     eventEntity.save()
 
@@ -123,13 +95,13 @@ export function handleToppedUp(event: ToppedUp): void {
     operator.events = events
     operator.save()
 
-    let stats = getStats();
-    stats.totalStaked = stats.totalStaked.plus(event.params.amount);
+    let stats = getStats()
+    stats.totalStaked = stats.totalStaked.plus(event.params.amount)
     stats.save()
 }
 
 export function handleUnstaked(event: Unstaked): void {
-    let eventEntity = getOrCreateOperatorEvent(event, "UNSTAKE");
+    let eventEntity = getOrCreateOperatorEvent(event, "UNSTAKE")
     eventEntity.amount = event.params.amount
     eventEntity.save()
 
@@ -141,7 +113,7 @@ export function handleUnstaked(event: Unstaked): void {
     operator.events = events
     operator.save()
 
-    let stats = getStats();
-    stats.totalStaked = stats.totalStaked.minus(event.params.amount);
+    let stats = getStats()
+    stats.totalStaked = stats.totalStaked.minus(event.params.amount)
     stats.save()
 }

@@ -55,7 +55,7 @@ export function handleDepositRevealed(event: DepositRevealed): void {
     let fundingTxHash = event.params.fundingTxHash
     let fundingOutputIndex = event.params.fundingOutputIndex
     // keccak256(fundingTxHash | fundingOutputIndex)
-    let id = Utils.calculateDepositKey(Utils.bytesToUint8Array(fundingTxHash), fundingOutputIndex.toI32());
+    let id = Utils.calculateDepositKey(Utils.bytesToUint8Array(fundingTxHash), fundingOutputIndex.toI32())
 
     let transaction = getOrCreateTransaction(event.transaction.hash)
     transaction.txHash = event.transaction.hash
@@ -66,13 +66,13 @@ export function handleDepositRevealed(event: DepositRevealed): void {
     transaction.description = "Deposit Revealed"
     transaction.save()
 
-    let hexWithoutOx = id.toHexString().substring(2).toUpperCase();
+    let hexWithoutOx = id.toHexString().substring(2).toUpperCase()
     let bridgeContract = Bridge.bind(event.address)
-    let depositsContract = bridgeContract.deposits(Utils.hexToBigint(hexWithoutOx));
+    let depositsContract = bridgeContract.deposits(Utils.hexToBigint(hexWithoutOx))
 
     let user = getOrCreateUser(event.params.depositor)
-    let tBtcToken = getOrCreateTbtcToken();
-    user.tbtcToken = tBtcToken.id;
+    let tBtcToken = getOrCreateTbtcToken()
+    user.tbtcToken = tBtcToken.id
     user.save()
 
     let deposit = getOrCreateDeposit(Bytes.fromByteArray(id))
@@ -196,7 +196,7 @@ export function callHandleSubmitDepositSweepProof(event: SubmitDepositSweepProof
     let txHash = event.inputs.mainUtxo.txHash
     let txOutputIndex = event.inputs.mainUtxo.txOutputIndex
     let txOutputValue = event.inputs.mainUtxo.txOutputValue
-    let vault = event.inputs.vault;
+    let vault = event.inputs.vault
 
     log.info("thanhlv callHandleSubmitDepositSweepProof txHash = {} , txOutputIndex = {}, txOutputValue = {}, vault = {}", [
         txHash.toHexString(),
@@ -276,8 +276,8 @@ export function handleRedemptionTimedOut(event: RedemptionTimedOut): void {
 }
 
 export function handleRedemptionsCompleted(event: RedemptionsCompleted): void {
-    let walletPubKeyHash = event.params.walletPubKeyHash;
-    let redemptionTxHash = event.params.redemptionTxHash;
+    let walletPubKeyHash = event.params.walletPubKeyHash
+    let redemptionTxHash = event.params.redemptionTxHash
 
     log.info("thanhlv handleRedemptionsCompleted walletPubKeyHash = {} , redemptionTxHash = {}",
         [

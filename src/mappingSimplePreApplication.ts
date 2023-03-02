@@ -5,8 +5,8 @@ import {
 import {
     getOrCreateOperator, getOrCreateOperatorEvent, getStats,
 } from "./utils/helper"
-import * as constants from "./utils/constants";
-import {Address} from "@graphprotocol/graph-ts";
+import * as constants from "./utils/constants"
+import {Address} from "@graphprotocol/graph-ts"
 
 /**
  * Registered operator for staking provider on old version
@@ -25,9 +25,9 @@ export function handleOperatorBonded(event: OperatorBonded): void {
     let events = operator.events
     events.push(eventEntity.id)
     operator.events = events
-    operator.save();
+    operator.save()
 
-    let stats = getStats();
+    let stats = getStats()
     stats.numOperatorsRegisteredNode += 1
     stats.save()
 }
