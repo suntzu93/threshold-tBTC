@@ -6,6 +6,7 @@ import {
     getOrCreateOperator, getOrCreateOperatorEvent, getStats,
 } from "./utils/helper"
 import * as constants from "./utils/constants";
+import {Address} from "@graphprotocol/graph-ts";
 
 /**
  * Registered operator for staking provider on old version
@@ -17,7 +18,7 @@ export function handleOperatorBonded(event: OperatorBonded): void {
     eventEntity.save()
 
     let operator = getOrCreateOperator(event.params.stakingProvider)
-    if (operator.address === constants.ADDRESS_ZERO){
+    if (operator.address.toHex() == constants.ADDRESS_ZERO.toHex()){
         operator.address = event.params.operator
     }
     operator.registeredOperatorAddress = 2
