@@ -34,7 +34,6 @@ export function getOrCreateUser(id: Bytes): User {
         user.totalTokensHeld = constants.ZERO_BI
         user.tbtcToken = getOrCreateTbtcToken().id
         user.deposits = []
-        user.redemptions = []
     }
     return user
 }
