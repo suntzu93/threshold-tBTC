@@ -1,8 +1,10 @@
 enum DepositStatus {
+    UNKNOWN
     REVEALED #-> bridge.revealDeposit() / DepositRevealed event
+    MINTING_REQUESTED
     SWEPT # -> bridge.submitDepositSweepProof() / DepositSwept event && bank.increaseBalances() / BalanceIncreased event
     COMPLETED
-    CANCEL # -> Guardian cancel , The optimistic minting request for the given deposit exis or The optimistic minting request for the given deposit has not been finalized yet.
+    CANCELED # -> Guardian cancel , The optimistic minting request for the given deposit exis or The optimistic minting request for the given deposit has not been finalized yet.
     REFUNDED # -> ???
 }
 
@@ -13,7 +15,7 @@ enum RedemptionStatus {
 }
 
 type Transaction @entity {
-    id: Bytes!
+    id: ID!
     txHash: Bytes!
     timestamp: BigInt!
     from: Bytes!
@@ -30,8 +32,8 @@ type User @entity {
     tokenBalance: BigInt!
     totalTokensHeld: BigInt!
     tbtcToken : TBTCToken!
-    deposits: [Deposit!] @derivedFrom(field: "user")
-    redemptions: [Redemption!] @derivedFrom(field: "user")
+    deposits: [Deposit!]!
+    redemptions: [Redemption!]!
 }
 
 type Deposit @entity {
@@ -74,6 +76,7 @@ type Redemption @entity {
 
 
 type TBTCToken @entity{
+    "TBTCToken"
     id: ID!
     name: String!
     symbol: String!
@@ -253,9 +256,12 @@ type StatsRecord @entity {
     totalTBTCAuthorizedAmount: BigInt!
     totalRandomBeaconAuthorizedAmount: BigInt!
     totalStaked: BigInt!
+
+    "True is not pause"
+    mintingStatus: Boolean!
 }
 """
-Exposes some global system status data. Only a single record with the id "current" is available.
+Exposes some global system status data. Only a single record with the id "status" is available.
 """
 type StatusRecord @entity {
     id: ID!

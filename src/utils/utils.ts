@@ -1,5 +1,6 @@
 import {ethereum, BigInt, ByteArray, Bytes, Entity, Value} from '@graphprotocol/graph-ts'
 import {crypto} from '@graphprotocol/graph-ts'
+import {final, init, update} from "./crypto";
 
 /** Calculates deposit key the same way as the Bridge contract.
  The deposit key is computed as
@@ -21,10 +22,6 @@ export function calculateDepositKey(
         byteArray[i] = data[i];
     }
     let hashArray = crypto.keccak256(byteArray);
-    // let hex = "0x";
-    // for (let i = 0; i < hashArray.length; i++) {
-    //     hex += hashArray[i].toString(16).padStart(2, "0");
-    // }
     return hashArray;
 }
 
@@ -38,14 +35,10 @@ export function calculateRedemptionKey(redeemerOutputScript: ByteArray, walletPu
     data.set(walletPublicKeyHash, scriptHashArray.length);
 
     let hashArray = crypto.keccak256(Bytes.fromUint8Array(data));
-    // let hex = "0x";
-    // for (let i = 0; i < hashArray.length; i++) {
-    //     hex += hashArray[i].toString(16).padStart(2, "0");
-    // }
     return hashArray;
 }
 
-export function keccak256TwoString(first: string,second:string): string{
+export function keccak256TwoString(first: string, second: string): string {
     let hashData = Bytes.fromHexString(first).concat(Bytes.fromHexString(second));
     return crypto.keccak256(hashData).toHexString();
 }
@@ -62,6 +55,10 @@ export function bytesToUint8Array(bytes: Bytes): Uint8Array {
  * Convert hex to Bigint. Start from the last character and multiply value with the 16s power.
  */
 export function hexToBigint(hex: string): BigInt {
+    if (hex.length >= 2 && hex.charAt(0) == '0' && hex.charAt(1) == 'x') {
+        hex = hex.substr(2);
+    }
+
     let bigint = BigInt.fromI32(0);
     let power = BigInt.fromI32(1);
     for (let i = hex.length - 1; i >= 0; i--) {
@@ -76,6 +73,30 @@ export function hexToBigint(hex: string): BigInt {
         power = power.times(BigInt.fromI32(16));
     }
     return bigint;
+}
+
+export function toHexString(bin: Uint8Array): string {
+    let bin_len = bin.length;
+    let hex = "";
+    for (let i = 0; i < bin_len; i++) {
+        let bin_i = bin[i] as u32;
+        let c = bin_i & 0xf;
+        let b = bin_i >> 4;
+        let x: u32 = ((87 + c + (((c - 10) >> 8) & ~38)) << 8) |
+            (87 + b + (((b - 10) >> 8) & ~38));
+        hex += String.fromCharCode(x as u8);
+        x >>= 8;
+        hex += String.fromCharCode(x as u8);
+    }
+    return hex;
+}
+
+export function hash(data: Uint8Array): Uint8Array {
+    const output = new Uint8Array(32);
+    init();
+    update(changetype<usize>(data.buffer), data.length);
+    final(changetype<usize>(output.buffer));
+    return output;
 }
 
 /** creates a string composed of '0's given a length */
@@ -101,6 +122,10 @@ export function convertDepositKeyToHex(depositKey: BigInt): string {
 
 export function getIDFromEvent(event: ethereum.Event): string {
     return event.transaction.hash.toHex() + "-" + event.logIndex.toString()
+}
+
+export function getIDFromCall(call: ethereum.Call): string {
+    return call.transaction.hash.toHex() + "-" + call.transaction.index.toString();
 }
 
 export function getBeaconGroupId(pubKey: Bytes): string {

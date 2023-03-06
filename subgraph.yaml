@@ -89,6 +89,8 @@ dataSources:
           handler: callHandleRequestRedemption
         - function: submitDepositSweepProof((bytes4,bytes,bytes,bytes4),(bytes,uint256,bytes),(bytes32,uint32,uint64),address)
           handler: callHandleSubmitDepositSweepProof
+        - function: revealDeposit((bytes4,bytes,bytes,bytes4),(uint32,bytes8,bytes20,bytes20,bytes4,address))
+          handler: callHandleRevealDeposit
       file: ./src/mappingBridge.ts
   - kind: ethereum
     name: TBTCVault
@@ -106,6 +108,10 @@ dataSources:
       abis:
         - name: TBTCVault
           file: ./abis/TBTCVault.json
+        - name: TBTC
+          file: ./abis/TBTC.json
+        - name: Bridge
+          file: ./abis/Bridge.json
       eventHandlers:
         - event: OptimisticMintingCancelled(indexed address,indexed uint256)
           handler: handleOptimisticMintingCancelled
@@ -119,6 +125,14 @@ dataSources:
           handler: handleOptimisticMintingRequested
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
+        - event: OptimisticMintingPaused()
+          handler: handleOptimisticMintingPaused
+        - event: OptimisticMintingUnpaused()
+          handler: handleOptimisticMintingUnPaused
+        - event: Minted(indexed address,uint256)
+          handler: handleMinted
+        - event: Unminted(indexed address,uint256)
+          handler: handlerUnminted
       file: ./src/mappingTBTCVault.ts
   - kind: ethereum
     name: TBTC

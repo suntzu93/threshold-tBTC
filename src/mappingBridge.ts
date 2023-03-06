@@ -32,7 +32,7 @@ import {
     WalletParametersUpdated,
     WalletTerminated,
     RequestRedemptionCall,
-    SubmitDepositSweepProofCall
+    SubmitDepositSweepProofCall, RevealDepositCall
 } from "../generated/Bridge/Bridge"
 
 
@@ -45,10 +45,104 @@ import {
     getOrCreateUser
 } from "./utils/helper"
 import * as Utils from "./utils/utils"
+import * as Const from "./utils/constants"
+
+import {getIDFromEvent} from "./utils/utils";
+import {extractOutputAtIndex, extractValue} from "./utils/bitcoin_utils"
 
 export function handleDepositParametersUpdated(
     event: DepositParametersUpdated
 ): void {
+}
+
+
+/**
+ * Normal case : handleDepositRevealed() will be called before callHandleRevealDeposit()
+ * Error case : transaction request revealed error so only callHandleRevealDeposit() be called
+ * @param call
+ */
+export function callHandleRevealDeposit(call: RevealDepositCall): void {
+    let fundingTx = call.inputs.fundingTx
+    let reveal = call.inputs.reveal
+
+    let version: Uint8Array = Uint8Array.wrap(fundingTx.version.buffer);
+    let inputVector: Uint8Array = Uint8Array.wrap(fundingTx.inputVector.buffer);
+    let outputVector: Uint8Array = Uint8Array.wrap(fundingTx.outputVector.buffer);
+    let locktime: Uint8Array = Uint8Array.wrap(fundingTx.locktime.buffer);
+
+
+    let packed = new Uint8Array(version.length + inputVector.length + outputVector.length + locktime.length);
+    packed.set(version, 0);
+    packed.set(inputVector, version.length);
+    packed.set(outputVector, version.length + inputVector.length);
+    packed.set(locktime, version.length + inputVector.length + outputVector.length);
+
+    //to generate bitcoin transaction we need double hash.
+    const hashData = Utils.hash(Utils.hash(packed));
+    let fundingTxHash: string = Utils.toHexString(hashData);
+
+    let id = Utils.calculateDepositKey(Utils.bytesToUint8Array(Bytes.fromHexString(fundingTxHash)), reveal.fundingOutputIndex.toI32())
+    let deposit = getOrCreateDeposit(Bytes.fromByteArray(id))
+    // if status === "UNKNOWN" mean DepositRevealed didn't called so transaction
+    // to reveal information failed , update status to SWEPT
+    if (deposit.status === "UNKNOWN") {
+
+        const transaction = getOrCreateTransaction(Utils.getIDFromCall(call))
+        transaction.txHash = call.transaction.hash
+        transaction.timestamp = call.block.timestamp
+        transaction.from = call.transaction.from
+        transaction.to = call.transaction.to
+        transaction.amount = Const.ZERO_BI
+        transaction.description = "Depositor request reveal information"
+        transaction.save()
+
+        const bridgeContract = Bridge.bind(call.to)
+        const depositsContract = bridgeContract.deposits(Utils.hexToBigint(id.toHexString()))
+
+        const user = getOrCreateUser(call.from)
+        const tBtcToken = getOrCreateTbtcToken()
+        user.tbtcToken = tBtcToken.id
+        const deposits = user.deposits
+        deposits.push(deposit.id)
+        user.deposits = deposits
+        user.save()
+
+
+        const fundingOutput = extractOutputAtIndex(fundingTx.outputVector, reveal.fundingOutputIndex.toI32())
+        const amount = extractValue(fundingOutput)
+        deposit.amount = amount
+        deposit.status = "SWEPT"
+        deposit.user = user.id
+        deposit.treasuryFee = depositsContract.treasuryFee
+        deposit.walletPubKeyHash = reveal.walletPubKeyHash
+        deposit.fundingTxHash = Bytes.fromHexString(fundingTxHash)
+        deposit.fundingOutputIndex = reveal.fundingOutputIndex
+        deposit.blindingFactor = reveal.blindingFactor
+        deposit.refundPubKeyHash = reveal.refundPubKeyHash
+        deposit.refundLocktime = reveal.refundLocktime
+        deposit.vault = reveal.vault
+        const transactions = deposit.transactions
+        transactions.push(transaction.id)
+        deposit.transactions = transactions
+        deposit.depositTimestamp = call.block.timestamp
+        deposit.updateTimestamp = call.block.timestamp
+        deposit.save()
+    } else {
+        const transaction = getOrCreateTransaction(Utils.getIDFromCall(call))
+        transaction.txHash = call.transaction.hash
+        //minus 1 to make sure this transaction always before DepositRevealed
+        transaction.timestamp = call.block.timestamp.minus(Const.ONE_BI)
+        transaction.from = call.transaction.from
+        transaction.to = call.transaction.to
+        transaction.amount = Const.ZERO_BI
+        transaction.description = "Depositor request reveal information"
+        transaction.save()
+
+        let transactions = deposit.transactions
+        transactions.push(transaction.id)
+        deposit.transactions = transactions
+        deposit.save()
+    }
 }
 
 export function handleDepositRevealed(event: DepositRevealed): void {
@@ -57,7 +151,7 @@ export function handleDepositRevealed(event: DepositRevealed): void {
     // keccak256(fundingTxHash | fundingOutputIndex)
     let id = Utils.calculateDepositKey(Utils.bytesToUint8Array(fundingTxHash), fundingOutputIndex.toI32())
 
-    let transaction = getOrCreateTransaction(event.transaction.hash)
+    let transaction = getOrCreateTransaction(getIDFromEvent(event))
     transaction.txHash = event.transaction.hash
     transaction.timestamp = event.block.timestamp
     transaction.from = event.transaction.from
@@ -66,18 +160,14 @@ export function handleDepositRevealed(event: DepositRevealed): void {
     transaction.description = "Deposit Revealed"
     transaction.save()
 
-    let hexWithoutOx = id.toHexString().substring(2).toUpperCase()
     let bridgeContract = Bridge.bind(event.address)
-    let depositsContract = bridgeContract.deposits(Utils.hexToBigint(hexWithoutOx))
+    let depositsContract = bridgeContract.deposits(Utils.hexToBigint(id.toHexString()))
 
-    let user = getOrCreateUser(event.params.depositor)
-    let tBtcToken = getOrCreateTbtcToken()
-    user.tbtcToken = tBtcToken.id
-    user.save()
 
     let deposit = getOrCreateDeposit(Bytes.fromByteArray(id))
-    deposit.user = user.id
-    deposit.amount = deposit.amount.plus(event.params.amount)
+    deposit.status = "REVEALED"
+    deposit.user = event.params.depositor
+    deposit.amount = event.params.amount
     deposit.treasuryFee = depositsContract.treasuryFee
     deposit.walletPubKeyHash = event.params.walletPubKeyHash
     deposit.fundingTxHash = event.params.fundingTxHash
@@ -92,10 +182,19 @@ export function handleDepositRevealed(event: DepositRevealed): void {
     deposit.depositTimestamp = event.block.timestamp
     deposit.updateTimestamp = event.block.timestamp
     deposit.save()
+
+
+    let user = getOrCreateUser(event.params.depositor)
+    let tBtcToken = getOrCreateTbtcToken()
+    user.tbtcToken = tBtcToken.id
+    let deposits = user.deposits
+    deposits.push(deposit.id)
+    user.deposits = deposits
+    user.save()
 }
 
 export function handleDepositsSwept(event: DepositsSwept): void {
-    log.debug("DepositsSwept called: {}, {}", [event.params.walletPubKeyHash.toHexString(), event.params.sweepTxHash.toHexString()])
+    // log.debug("DepositsSwept called: {}, {}", [event.params.walletPubKeyHash.toHexString(), event.params.sweepTxHash.toHexString()])
 }
 
 export function handleFraudChallengeDefeatTimedOut(
@@ -172,42 +271,58 @@ export function handleRedemptionParametersUpdated(
 ): void {
 }
 
+
 export function callHandleRequestRedemption(event: RequestRedemptionCall): void {
-    let walletPubKeyHash = event.inputs.walletPubKeyHash
 
-    let txHash = event.inputs.mainUtxo.txHash
-    let txOutputIndex = event.inputs.mainUtxo.txOutputIndex
-    let txOutputValue = event.inputs.mainUtxo.txOutputValue
-
-    let redeemerOutputScript = event.inputs.redeemerOutputScript
-    let amount = event.inputs.amount
-
-    log.info("thanhlv callHandleRequestRedemption walletPubKeyHash = {}, txHash = {} , txOutputIndex = {}, txOutputValue = {}, redeemerOutputScript = {} , amount = {}", [
-        walletPubKeyHash.toHexString(),
-        txHash.toHexString(),
-        txOutputIndex.toString(),
-        txOutputValue.toString(),
-        redeemerOutputScript.toHexString(),
-        amount.toString()
-    ])
+    // let txHash = event.inputs.mainUtxo.txHash
+    // let txOutputIndex = event.inputs.mainUtxo.txOutputIndex
+    // let txOutputValue = event.inputs.mainUtxo.txOutputValue
+    // let walletPubKeyHash = event.inputs.walletPubKeyHash
+    // let redeemerOutputScript = event.inputs.redeemerOutputScript
+    // let amount = event.inputs.amount
+    //
+    // let id = Utils.calculateRedemptionKey(redeemerOutputScript, walletPubKeyHash)
+    //
 }
 
 export function callHandleSubmitDepositSweepProof(event: SubmitDepositSweepProofCall): void {
-    let txHash = event.inputs.mainUtxo.txHash
-    let txOutputIndex = event.inputs.mainUtxo.txOutputIndex
-    let txOutputValue = event.inputs.mainUtxo.txOutputValue
-    let vault = event.inputs.vault
+    // let sweepTx = event.inputs.sweepTx
+    // let version = sweepTx.version
+    // let inputVector = sweepTx.inputVector
+    // let outputVector = sweepTx.outputVector
+    // let locktime = sweepTx.locktime
+    //
+    // let sweepProof = event.inputs.sweepProof
+    // let merkleProof = sweepProof.merkleProof
+    // let txIndexInBlock = sweepProof.txIndexInBlock
+    // let bitcoinHeaders = sweepProof.bitcoinHeaders
+    //
+    // let mainUtxo = event.inputs.mainUtxo
+    // let txOutputIndex = mainUtxo.txOutputIndex
+    // let txOutputValue = mainUtxo.txOutputValue
+    //
+    // let vault = event.inputs.mainUtxo
 
-    log.info("thanhlv callHandleSubmitDepositSweepProof txHash = {} , txOutputIndex = {}, txOutputValue = {}, vault = {}", [
-        txHash.toHexString(),
-        txOutputIndex.toString(),
-        txOutputValue.toString(),
-        vault.toHexString()
-    ])
+
+    // let transactionEntity = Helper.getOrCreateTransaction(event.transaction.hash)
+    // transactionEntity.txHash = event.transaction.hash
+    // transactionEntity.timestamp = event.block.timestamp
+    // transactionEntity.from = event.transaction.from
+    // transactionEntity.to = event.transaction.to
+    // transactionEntity.description = "Deposit Sweep Proof"
+    // transactionEntity.save()
+    //
+    // let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(Utils.convertDepositKeyToHex(event.params.depositKey)))
+    // deposit.status = "MINTING_REQUEST"
+    // deposit.updateTimestamp = event.block.timestamp
+    // let transactions = deposit.transactions
+    // transactions.push(transactionEntity.id)
+    // deposit.transactions = transactions
+    // deposit.save()
 }
 
 export function handleRedemptionRequested(event: RedemptionRequested): void {
-    let transaction = getOrCreateTransaction(event.transaction.hash)
+    let transaction = getOrCreateTransaction(getIDFromEvent(event))
     transaction.txHash = event.transaction.hash
     transaction.timestamp = event.block.timestamp
     transaction.from = event.transaction.from
@@ -216,15 +331,13 @@ export function handleRedemptionRequested(event: RedemptionRequested): void {
     transaction.description = "Redemption Requested"
     transaction.save()
 
-    let user = getOrCreateUser(event.params.redeemer)
-    user.save()
 
     let walletPubKeyHash = event.params.walletPubKeyHash
     let redeemerOutputScript = event.params.redeemerOutputScript
     // keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash)
     let id = Utils.calculateRedemptionKey(redeemerOutputScript, walletPubKeyHash)
     let redemption = getOrCreateRedemption(Bytes.fromByteArray(id))
-    redemption.user = user.id
+    redemption.user = event.params.redeemer
     redemption.amount = event.params.requestedAmount
     redemption.treasuryFee = event.params.treasuryFee
     redemption.txMaxFee = event.params.txMaxFee
@@ -233,30 +346,18 @@ export function handleRedemptionRequested(event: RedemptionRequested): void {
     redemption.transactions = transactions
     redemption.save()
 
-    log.info("thanhlv2 redemptionKey 1 : {} , outputBytes.length = {} , walletPublicKeyBytes.length = {}", [id.toHexString(), redeemerOutputScript.length.toString(), walletPubKeyHash.length.toString()])
-
-    log.info("thanhlv handleRedemptionRequested walletPubKeyHash = {} , redeemerOutputScript = {}, redeemer = {} , requestedAmount  = {}, treasuryFee = {}, txMaxFee = {}",
-        [
-            walletPubKeyHash.toHexString(),
-            redeemerOutputScript.toHexString(),
-            event.params.redeemer.toHexString(),
-            event.params.requestedAmount.toString(),
-            event.params.treasuryFee.toString(),
-            event.params.txMaxFee.toString()
-        ])
+    let user = getOrCreateUser(event.params.redeemer)
+    let redeems = user.redemptions
+    redeems.push(redemption.id)
+    user.redemptions = redeems
+    user.save()
 }
 
 export function handleRedemptionTimedOut(event: RedemptionTimedOut): void {
-    log.info("thanhlv handleRedemptionTimedOut walletPubKeyHash = {} , redeemerOutputScript = {}",
-        [
-            event.params.walletPubKeyHash.toHexString(),
-            event.params.redeemerOutputScript.toHexString(),
-        ])
-
     let walletPubKeyHash = event.params.walletPubKeyHash
     let redeemerOutputScript = event.params.redeemerOutputScript
 
-    let transaction = getOrCreateTransaction(event.transaction.hash)
+    let transaction = getOrCreateTransaction(getIDFromEvent(event))
     transaction.txHash = event.transaction.hash
     transaction.timestamp = event.block.timestamp
     transaction.from = event.transaction.from
@@ -272,19 +373,11 @@ export function handleRedemptionTimedOut(event: RedemptionTimedOut): void {
     transactions.push(transaction.id)
     redemption.transactions = transactions
     redemption.save()
-
 }
 
 export function handleRedemptionsCompleted(event: RedemptionsCompleted): void {
     let walletPubKeyHash = event.params.walletPubKeyHash
     let redemptionTxHash = event.params.redemptionTxHash
-
-    log.info("thanhlv handleRedemptionsCompleted walletPubKeyHash = {} , redemptionTxHash = {}",
-        [
-            walletPubKeyHash.toHexString(),
-            redemptionTxHash.toHexString()
-        ])
-
 }
 
 export function handleSpvMaintainerStatusUpdated(
