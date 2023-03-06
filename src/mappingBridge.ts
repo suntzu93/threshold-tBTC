@@ -32,23 +32,30 @@ import {
     WalletParametersUpdated,
     WalletTerminated,
     RequestRedemptionCall,
-    SubmitDepositSweepProofCall, RevealDepositCall
+    SubmitDepositSweepProofCall, RevealDepositCall, SubmitRedemptionProofCall
 } from "../generated/Bridge/Bridge"
 
 
-import {log, Bytes} from '@graphprotocol/graph-ts'
+import {log, Bytes, crypto} from '@graphprotocol/graph-ts'
 import {
     getOrCreateDeposit,
     getOrCreateRedemption,
     getOrCreateTbtcToken,
     getOrCreateTransaction,
-    getOrCreateUser
+    getOrCreateUser, getStatus
 } from "./utils/helper"
 import * as Utils from "./utils/utils"
 import * as Const from "./utils/constants"
 
 import {getIDFromEvent} from "./utils/utils";
-import {extractOutputAtIndex, extractValue} from "./utils/bitcoin_utils"
+import {
+    determineOutputLengthAt,
+    extractOutputAtIndex, extractUint64LE,
+    extractValue,
+    makeP2PKHScript,
+    makeP2WPKHScript,
+    parseVarInt
+} from "./utils/bitcoin_utils"
 
 export function handleDepositParametersUpdated(
     event: DepositParametersUpdated
@@ -271,56 +278,6 @@ export function handleRedemptionParametersUpdated(
 ): void {
 }
 
-
-export function callHandleRequestRedemption(event: RequestRedemptionCall): void {
-
-    // let txHash = event.inputs.mainUtxo.txHash
-    // let txOutputIndex = event.inputs.mainUtxo.txOutputIndex
-    // let txOutputValue = event.inputs.mainUtxo.txOutputValue
-    // let walletPubKeyHash = event.inputs.walletPubKeyHash
-    // let redeemerOutputScript = event.inputs.redeemerOutputScript
-    // let amount = event.inputs.amount
-    //
-    // let id = Utils.calculateRedemptionKey(redeemerOutputScript, walletPubKeyHash)
-    //
-}
-
-export function callHandleSubmitDepositSweepProof(event: SubmitDepositSweepProofCall): void {
-    // let sweepTx = event.inputs.sweepTx
-    // let version = sweepTx.version
-    // let inputVector = sweepTx.inputVector
-    // let outputVector = sweepTx.outputVector
-    // let locktime = sweepTx.locktime
-    //
-    // let sweepProof = event.inputs.sweepProof
-    // let merkleProof = sweepProof.merkleProof
-    // let txIndexInBlock = sweepProof.txIndexInBlock
-    // let bitcoinHeaders = sweepProof.bitcoinHeaders
-    //
-    // let mainUtxo = event.inputs.mainUtxo
-    // let txOutputIndex = mainUtxo.txOutputIndex
-    // let txOutputValue = mainUtxo.txOutputValue
-    //
-    // let vault = event.inputs.mainUtxo
-
-
-    // let transactionEntity = Helper.getOrCreateTransaction(event.transaction.hash)
-    // transactionEntity.txHash = event.transaction.hash
-    // transactionEntity.timestamp = event.block.timestamp
-    // transactionEntity.from = event.transaction.from
-    // transactionEntity.to = event.transaction.to
-    // transactionEntity.description = "Deposit Sweep Proof"
-    // transactionEntity.save()
-    //
-    // let deposit = Helper.getOrCreateDeposit(Bytes.fromHexString(Utils.convertDepositKeyToHex(event.params.depositKey)))
-    // deposit.status = "MINTING_REQUEST"
-    // deposit.updateTimestamp = event.block.timestamp
-    // let transactions = deposit.transactions
-    // transactions.push(transactionEntity.id)
-    // deposit.transactions = transactions
-    // deposit.save()
-}
-
 export function handleRedemptionRequested(event: RedemptionRequested): void {
     let transaction = getOrCreateTransaction(getIDFromEvent(event))
     transaction.txHash = event.transaction.hash
@@ -331,26 +288,25 @@ export function handleRedemptionRequested(event: RedemptionRequested): void {
     transaction.description = "Redemption Requested"
     transaction.save()
 
-
     let walletPubKeyHash = event.params.walletPubKeyHash
     let redeemerOutputScript = event.params.redeemerOutputScript
     // keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash)
     let id = Utils.calculateRedemptionKey(redeemerOutputScript, walletPubKeyHash)
     let redemption = getOrCreateRedemption(Bytes.fromByteArray(id))
+    redemption.status = "REQUESTED"
     redemption.user = event.params.redeemer
     redemption.amount = event.params.requestedAmount
     redemption.treasuryFee = event.params.treasuryFee
     redemption.txMaxFee = event.params.txMaxFee
+    redemption.redemptionTxHash = event.transaction.hash
+    redemption.redemptionTimestamp = event.block.timestamp
+    redemption.walletPubKeyHash = event.params.walletPubKeyHash
+    redemption.redeemerOutputScript = event.params.redeemerOutputScript
+
     let transactions = redemption.transactions
     transactions.push(transaction.id)
     redemption.transactions = transactions
     redemption.save()
-
-    let user = getOrCreateUser(event.params.redeemer)
-    let redeems = user.redemptions
-    redeems.push(redemption.id)
-    user.redemptions = redeems
-    user.save()
 }
 
 export function handleRedemptionTimedOut(event: RedemptionTimedOut): void {
@@ -376,8 +332,30 @@ export function handleRedemptionTimedOut(event: RedemptionTimedOut): void {
 }
 
 export function handleRedemptionsCompleted(event: RedemptionsCompleted): void {
-    let walletPubKeyHash = event.params.walletPubKeyHash
-    let redemptionTxHash = event.params.redemptionTxHash
+    // let status = getStatus()
+    // let currentRedemptions = status.currentRedemptions
+    // if (currentRedemptions) {
+    //     for (let i = 0; i < currentRedemptions.length; i++) {
+    //         let transaction = getOrCreateTransaction(getIDFromEvent(event))
+    //         transaction.txHash = event.transaction.hash
+    //         transaction.timestamp = event.block.timestamp
+    //         transaction.from = event.transaction.from
+    //         transaction.to = event.transaction.to
+    //         transaction.description = "Redemption success"
+    //         transaction.save()
+    //
+    //         let redemption = getOrCreateRedemption(currentRedemptions[i])
+    //         redemption.status = "COMPLETED"
+    //         redemption.completedTxHash = event.params.redemptionTxHash
+    //         redemption.updateTimestamp = event.block.timestamp
+    //         let transactions = redemption.transactions
+    //         transactions.push(transaction.id)
+    //         redemption.transactions = transactions
+    //         redemption.save()
+    //     }
+    // }
+    // status.currentRedemptions = []
+    // status.save()
 }
 
 export function handleSpvMaintainerStatusUpdated(

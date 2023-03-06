@@ -33,7 +33,7 @@ type User @entity {
     totalTokensHeld: BigInt!
     tbtcToken : TBTCToken!
     deposits: [Deposit!]!
-    redemptions: [Redemption!]!
+    redemptions: [Redemption!]! @derivedFrom(field: "user")
 }
 
 type Deposit @entity {
@@ -271,4 +271,6 @@ type StatusRecord @entity {
     ecdsaState: State!
     challenger: Bytes
     reason: String
+
+    currentRedemptions: [Bytes!]!
 }

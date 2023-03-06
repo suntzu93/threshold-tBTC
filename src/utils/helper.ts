@@ -114,13 +114,14 @@ export function getStats(): StatsRecord {
 }
 
 export function getStatus(): StatusRecord {
-    let stats = StatusRecord.load("status")
-    if (stats == null) {
-        stats = new StatusRecord("status")
-        stats.groupState = "IDLE"
-        stats.ecdsaState = "IDLE"
+    let status = StatusRecord.load("status")
+    if (status == null) {
+        status = new StatusRecord("status")
+        status.groupState = "IDLE"
+        status.ecdsaState = "IDLE"
+        status.currentRedemptions = []
     }
-    return stats as StatusRecord
+    return status as StatusRecord
 }
 
 export function getOrCreateOperator(address: Address): Operator {
