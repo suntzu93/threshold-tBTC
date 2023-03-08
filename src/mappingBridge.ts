@@ -49,12 +49,8 @@ import * as Const from "./utils/constants"
 
 import {getIDFromEvent} from "./utils/utils";
 import {
-    determineOutputLengthAt,
-    extractOutputAtIndex, extractUint64LE,
+    extractOutputAtIndex,
     extractValue,
-    makeP2PKHScript,
-    makeP2WPKHScript,
-    parseVarInt
 } from "./utils/bitcoin_utils"
 
 export function handleDepositParametersUpdated(
@@ -307,6 +303,12 @@ export function handleRedemptionRequested(event: RedemptionRequested): void {
     transactions.push(transaction.id)
     redemption.transactions = transactions
     redemption.save()
+
+    let status = getStatus()
+    let pendingRedemptions = status.pendingRedemptions
+    pendingRedemptions.push(redemption.id)
+    status.pendingRedemptions = pendingRedemptions
+    status.save()
 }
 
 export function handleRedemptionTimedOut(event: RedemptionTimedOut): void {
@@ -329,33 +331,48 @@ export function handleRedemptionTimedOut(event: RedemptionTimedOut): void {
     transactions.push(transaction.id)
     redemption.transactions = transactions
     redemption.save()
+
+    let status = getStatus()
+    let pendingRedemptions = status.pendingRedemptions
+    status.pendingRedemptions = Utils.removeItem(pendingRedemptions, redemption.id)
+    status.save()
 }
 
 export function handleRedemptionsCompleted(event: RedemptionsCompleted): void {
-    // let status = getStatus()
-    // let currentRedemptions = status.currentRedemptions
-    // if (currentRedemptions) {
-    //     for (let i = 0; i < currentRedemptions.length; i++) {
-    //         let transaction = getOrCreateTransaction(getIDFromEvent(event))
-    //         transaction.txHash = event.transaction.hash
-    //         transaction.timestamp = event.block.timestamp
-    //         transaction.from = event.transaction.from
-    //         transaction.to = event.transaction.to
-    //         transaction.description = "Redemption success"
-    //         transaction.save()
-    //
-    //         let redemption = getOrCreateRedemption(currentRedemptions[i])
-    //         redemption.status = "COMPLETED"
-    //         redemption.completedTxHash = event.params.redemptionTxHash
-    //         redemption.updateTimestamp = event.block.timestamp
-    //         let transactions = redemption.transactions
-    //         transactions.push(transaction.id)
-    //         redemption.transactions = transactions
-    //         redemption.save()
-    //     }
-    // }
-    // status.currentRedemptions = []
-    // status.save()
+    const pendingRedemptions = getStatus().pendingRedemptions
+    if (pendingRedemptions) {
+        let bridgeContract = Bridge.bind(event.address)
+        for (let i = 0; i < pendingRedemptions.length; i++) {
+            let redemptionId = pendingRedemptions[i]
+            let pendingRedemption = bridgeContract.pendingRedemptions(Utils.hexToBigint(redemptionId.toHex()))
+
+            // requestedAt is 0 means this redemption request has been processed
+            if (pendingRedemption.requestedAt.equals(Const.ZERO_BI)) {
+                let transaction = getOrCreateTransaction(getIDFromEvent(event))
+                transaction.txHash = event.transaction.hash
+                transaction.timestamp = event.block.timestamp
+                transaction.from = event.transaction.from
+                transaction.to = event.transaction.to
+                transaction.description = "Redemption success"
+                transaction.save()
+
+                let redemption = getOrCreateRedemption(redemptionId)
+                redemption.status = "COMPLETED"
+                redemption.completedTxHash = event.params.redemptionTxHash
+                redemption.updateTimestamp = event.block.timestamp
+                let transactions = redemption.transactions
+                transactions.push(transaction.id)
+                redemption.transactions = transactions
+                redemption.save()
+
+                //Update list pending redemptions
+                let status = getStatus()
+                let pendingRedemptions = status.pendingRedemptions
+                status.pendingRedemptions = Utils.removeItem(pendingRedemptions, redemption.id)
+                status.save()
+            }
+        }
+    }
 }
 
 export function handleSpvMaintainerStatusUpdated(

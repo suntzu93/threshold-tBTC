@@ -272,5 +272,5 @@ type StatusRecord @entity {
     challenger: Bytes
     reason: String
 
-    currentRedemptions: [Bytes!]!
+    pendingRedemptions: [Bytes!]!
 }

@@ -132,3 +132,15 @@ export function getBeaconGroupId(pubKey: Bytes): string {
     // Cut off the group pub key, we don't want the ids to to be unreasonably long.
     return pubKey.toHexString().slice(0, 62)
 }
+
+export function removeItem<T>(data: Array<T>, item: T): Array<T> {
+    let index = data.indexOf(item);
+    if (index === -1) {
+        // Item not found, return the original array
+        return data;
+    }
+    
+    // Remove the item using splice()
+    data.splice(index, 1);
+    return data;
+}

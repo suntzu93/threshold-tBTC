@@ -118,7 +118,7 @@ export function getStatus(): StatusRecord {
         status = new StatusRecord("status")
         status.groupState = "IDLE"
         status.ecdsaState = "IDLE"
-        status.currentRedemptions = []
+        status.pendingRedemptions = []
     }
     return status as StatusRecord
 }
