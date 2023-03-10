@@ -56,6 +56,7 @@ export function handleStaked(event: Staked): void {
 
     let stats = getStats()
     stats.totalStaked = stats.totalStaked.plus(event.params.amount)
+    stats.numOperators += 1
     stats.save()
 }
 

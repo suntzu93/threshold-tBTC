@@ -253,18 +253,19 @@ export function handleOperatorRegistered(event: OperatorRegistered): void {
         let eventEntity = getOrCreateOperatorEvent(event, "REGISTERED_OPERATOR")
         eventEntity.save()
 
-        operator.address = event.params.operator
         operator.registeredOperatorAddress += 1
+        operator.address = event.params.operator
         let events = operator.events
         events.push(eventEntity.id)
         operator.events = events
-        operator.save();
 
-        if (operator.registeredOperatorAddress >= 2) {
+        if (!operator.isBondRegisteredOperatorAddress && operator.registeredOperatorAddress == 2) {
             let stats = getStats();
             stats.numOperatorsRegisteredNode += 1
             stats.save()
         }
+
+        operator.save();
     }
 }
 

@@ -21,15 +21,18 @@ export function handleOperatorBonded(event: OperatorBonded): void {
     if (operator.address.toHex() == constants.ADDRESS_ZERO.toHex()){
         operator.address = event.params.operator
     }
-    operator.registeredOperatorAddress = 2
+    if (operator.registeredOperatorAddress < 2 && !operator.isBondRegisteredOperatorAddress){
+        operator.registeredOperatorAddress = 2
+        operator.isBondRegisteredOperatorAddress = true
+
+        let stats = getStats()
+        stats.numOperatorsRegisteredNode += 1
+        stats.save()
+    }
     let events = operator.events
     events.push(eventEntity.id)
     operator.events = events
     operator.save()
-
-    let stats = getStats()
-    stats.numOperatorsRegisteredNode += 1
-    stats.save()
 }
 
 export function handleOperatorConfirmed(event: OperatorConfirmed): void {

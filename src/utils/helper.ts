@@ -129,6 +129,7 @@ export function getOrCreateOperator(address: Address): Operator {
         operator = new Operator(address.toHexString())
         operator.address = constants.ADDRESS_ZERO
         operator.registeredOperatorAddress = 0
+        operator.isBondRegisteredOperatorAddress = false
         operator.stakedAt = constants.ZERO_BI
         operator.stakeType = 0
         operator.randomBeaconAuthorized = false

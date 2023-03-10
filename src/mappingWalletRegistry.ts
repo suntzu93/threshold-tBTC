@@ -223,7 +223,7 @@ export function handleOperatorRegistered(event: OperatorRegistered): void {
         operator.events = events
         operator.save()
 
-        if (operator.registeredOperatorAddress >= 2) {
+        if (!operator.isBondRegisteredOperatorAddress && operator.registeredOperatorAddress == 2) {
             let stats = getStats()
             stats.numOperatorsRegisteredNode += 1
             stats.save()
