@@ -130,22 +130,23 @@ export function callHandleRevealDeposit(call: RevealDepositCall): void {
         deposit.depositTimestamp = call.block.timestamp
         deposit.updateTimestamp = call.block.timestamp
         deposit.save()
-    } else {
-        const transaction = getOrCreateTransaction(Utils.getIDFromCall(call))
-        transaction.txHash = call.transaction.hash
-        //minus 1 to make sure this transaction always before DepositRevealed
-        transaction.timestamp = call.block.timestamp.minus(Const.ONE_BI)
-        transaction.from = call.transaction.from
-        transaction.to = call.transaction.to
-        transaction.amount = Const.ZERO_BI
-        transaction.description = "Depositor request reveal information"
-        transaction.save()
-
-        let transactions = deposit.transactions
-        transactions.push(transaction.id)
-        deposit.transactions = transactions
-        deposit.save()
     }
+    // else {
+    //     const transaction = getOrCreateTransaction(Utils.getIDFromCall(call))
+    //     transaction.txHash = call.transaction.hash
+    //     //minus 1 to make sure this transaction always before DepositRevealed
+    //     transaction.timestamp = call.block.timestamp.minus(Const.ONE_BI)
+    //     transaction.from = call.transaction.from
+    //     transaction.to = call.transaction.to
+    //     transaction.amount = Const.ZERO_BI
+    //     transaction.description = "Depositor request reveal information"
+    //     transaction.save()
+    //
+    //     let transactions = deposit.transactions
+    //     transactions.push(transaction.id)
+    //     deposit.transactions = transactions
+    //     deposit.save()
+    // }
 }
 
 export function handleDepositRevealed(event: DepositRevealed): void {
