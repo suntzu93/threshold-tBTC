@@ -22,10 +22,10 @@ export function extractOutputAtIndex(vout: Uint8Array, index: i32): Uint8Array {
     return safeSlice(vout, offset.toI32(), offset.plus(BigInt.fromI32(len)).toI32());
 }
 
-export function extractValue(output: Uint8Array): BigInt {
-    const leValue = extractValueLE(output);
+export function extractValueAt(output: Uint8Array, index: BigInt): BigInt {
+    const leValue = extractValueLEAt(output, index);
     const beValue = reverseEndianness(leValue);
-    return bytesToUint(beValue);
+    return BigInt.fromI32(bytesToUint(beValue));
 }
 
 function determineOutputLength(output: Uint8Array): i32 {
@@ -45,39 +45,40 @@ class VarIntTuple {
 }
 
 export function parseVarInt(b: Uint8Array): VarIntTuple {
-    const dataLength = BigInt.fromI32(determineVarIntDataLength(b[0]));
+    return parseVarIntAt(b, 0);
+}
 
-    if (dataLength.toI32() === 0) {
-        const tuple: VarIntTuple = {
-            dataLength: dataLength,
-            number: BigInt.fromI32(b[0])
-        };
-        return tuple;
+export function parseVarIntAt(b: Uint8Array, index: u32): VarIntTuple {
+    const dataLength = determineVarIntDataLengthAt(b, index);
+    if (dataLength === 0) {
+        return {
+            dataLength: BigInt.fromI32(0),
+            number: BigInt.fromI32(b[index])
+        }
     }
-
-    if (b.length < 1 + dataLength.toI32()) {
+    if (b.length < 1 + dataLength + index) {
         log.error("Read overrun during VarInt parsing", [])
-
     }
 
-    const number = bytesToUint(reverseEndianness(safeSlice(b, 1, 1 + dataLength.toI32())));
+    const number = bytesToUint(reverseEndianness(safeSlice(b, 1, 1 + dataLength + index)));
 
-    const tuple: VarIntTuple = {
-        dataLength: dataLength,
-        number: number
-    };
-    return tuple;
-}
-
-function bytesToUint(uint8Arr: Uint8Array): BigInt {
-    let total = BigInt.fromI32(0);
-    for (let i = 0; i < uint8Arr.length; i += 1) {
-        total = total.plus(BigInt.fromI32(uint8Arr[i]).leftShift(<u8>BigInt.fromI32(uint8Arr.length - i - 1).times(BigInt.fromI32(8)).toU32()));
+    return {
+        dataLength: BigInt.fromI32(dataLength),
+        number: BigInt.fromI64(number)
     }
-    return total;
 }
 
-function safeSlice(buf: Uint8Array, first: i32 = 0, last: i32 = buf.length): Uint8Array {
+export function bytesToUint(b: Uint8Array): i32 {
+    let number: i32 = 0;
+
+    for (let i: i32 = 0; i < b.length; i++) {
+        number += i32(b[i]) * (i32(2) ** (8 * (b.length - (i + 1))));
+    }
+
+    return number;
+}
+
+export function safeSlice(buf: Uint8Array, first: i32 = 0, last: i32 = buf.length): Uint8Array {
     let start: i32;
     let end: i32;
 
@@ -110,26 +111,112 @@ function safeSlice(buf: Uint8Array, first: i32 = 0, last: i32 = buf.length): Uin
     return buf.slice(start, end);
 }
 
+/**
+ *
+ * Changes the endianness of a byte array
+ * Returns a new, backwards, byte array
+ */
 function reverseEndianness(uint8Arr: Uint8Array): Uint8Array {
     const newArr = safeSlice(uint8Arr);
     return newArr.reverse();
 }
 
-function determineVarIntDataLength(flag: u8): u32 {
-    if (flag === 0xff) {
+function determineVarIntDataLength(data: Uint8Array): u32 {
+    return determineVarIntDataLengthAt(data, 0)
+}
+
+/**
+ *
+ * Determines the length of a VarInt in bytes
+ * A VarInt of >1 byte is prefixed with a flag indicating its length
+ */
+function determineVarIntDataLengthAt(data: Uint8Array, flag: u32): u32 {
+    if (data[flag] === 0xff) {
         return 8; // one-byte flag, 8 bytes data
     }
-    if (flag === 0xfe) {
+    if (data[flag] === 0xfe) {
         return 4; // one-byte flag, 4 bytes data
     }
-    if (flag === 0xfd) {
+    if (data[flag] === 0xfd) {
         return 2; // one-byte flag, 2 bytes data
     }
 
     return 0; // flag is data
 }
 
+/**
+ *
+ * Extracts the value bytes from the output in a tx
+ * Value is an 8-byte little-endian number
+ */
+function extractValueLEAt(output: Uint8Array, index: BigInt): Uint8Array {
+    return safeSlice(output, index.toI32(), 8);
+}
 
-function extractValueLE(output: Uint8Array): Uint8Array {
-    return safeSlice(output, 0, 8);
+/**
+ *
+ * Extracts the outpoint tx id from an input
+ * 32 byte tx id
+ **/
+export function extractInputTxIdLEAt(input: Uint8Array, inputStartingIndex: BigInt): Uint8Array {
+    return safeSlice(input, inputStartingIndex.toI32(), inputStartingIndex.toI32() + 32);
+}
+
+/**
+ *
+ * Extracts the LE tx input index from the input in a tx
+ * 4 byte tx index
+ */
+export function extractTxIndexLEAt(input: Uint8Array, inputStartingIndex: BigInt): Uint8Array {
+    return safeSlice(input, inputStartingIndex.toI32() + 32, inputStartingIndex.toI32() + 32 + 4);
+}
+
+/**
+ *
+ * Extracts the LE tx input index from the input in a tx
+ * 4 byte tx index
+ *
+ */
+export function extractTxIndexAt(input: Uint8Array, inputStartingIndex: BigInt): BigInt {
+    const leIndex = extractTxIndexLEAt(input, inputStartingIndex);
+    const beIndex = reverseEndianness(leIndex);
+    return BigInt.fromI64(bytesToUint(beIndex));
+}
+
+class TupleScriptSig {
+    dataLength: BigInt;
+    scriptSigLen: BigInt;
+}
+
+/**
+ *
+ * Determines the length of a scriptSig in an input
+ * Will return 0 if passed a witness input
+ */
+export function extractScriptSigLenAt(input: Uint8Array, inputStartingIndex: BigInt): TupleScriptSig {
+    if (input.length < 37) {
+        throw new Error('Read overrun');
+    }
+    const varIntTuple = parseVarInt(safeSlice(input, inputStartingIndex.toI32() + 36));
+    return {dataLength: varIntTuple.dataLength, scriptSigLen: varIntTuple.number};
+}
+
+/**
+ *  Determines the length of an input from its scriptsig
+ *  36 for outpoint, 1 for scriptsig length, 4 for sequence
+ */
+export function determineInputLengthAt(input: Uint8Array, inputStartingIndex: BigInt): BigInt {
+    const tupleScriptSig = extractScriptSigLenAt(input, inputStartingIndex);
+    return BigInt.fromI32(41).plus(tupleScriptSig.dataLength).plus(tupleScriptSig.scriptSigLen);
+}
+
+export function determineOutputLengthAt(output: Uint8Array, outputStartingIndex: BigInt): BigInt {
+    if (output.length < 9) {
+        throw new Error('Read overrun');
+    }
+
+    const varIntTuple = parseVarIntAt(output, 8 + outputStartingIndex.toU32());
+
+    // 8 byte value, 1 byte for len itself
+    return BigInt.fromI64(8 + 1).plus(varIntTuple.dataLength).plus(varIntTuple.number);
 }

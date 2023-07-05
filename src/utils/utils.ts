@@ -1,5 +1,4 @@
-import {ethereum, BigInt, ByteArray, Bytes, Entity, Value} from '@graphprotocol/graph-ts'
-import {crypto} from '@graphprotocol/graph-ts'
+import {BigInt, ByteArray, Bytes, crypto, ethereum} from '@graphprotocol/graph-ts'
 import {final, init, update} from "./crypto";
 
 /** Calculates deposit key the same way as the Bridge contract.
@@ -21,8 +20,7 @@ export function calculateDepositKey(
     for (let i = 0; i < data.length; i++) {
         byteArray[i] = data[i];
     }
-    let hashArray = crypto.keccak256(byteArray);
-    return hashArray;
+    return crypto.keccak256(byteArray);
 }
 
 /**
@@ -34,8 +32,20 @@ export function calculateRedemptionKey(redeemerOutputScript: ByteArray, walletPu
     data.set(scriptHashArray, 0);
     data.set(walletPublicKeyHash, scriptHashArray.length);
 
-    let hashArray = crypto.keccak256(Bytes.fromUint8Array(data));
-    return hashArray;
+    return crypto.keccak256(Bytes.fromUint8Array(data));
+}
+
+/**
+ * The key = keccak256(scriptHash | walletPubKeyHash).
+ * @param scriptHash
+ * @param walletPublicKeyHash
+ */
+export function calculateRedemptionKeyByScriptHash(scriptHash: ByteArray, walletPublicKeyHash: ByteArray): ByteArray {
+    let data = new Uint8Array(scriptHash.length + walletPublicKeyHash.length);
+    data.set(scriptHash, 0);
+    data.set(walletPublicKeyHash, scriptHash.length);
+
+    return crypto.keccak256(Bytes.fromUint8Array(data));
 }
 
 export function keccak256TwoString(first: string, second: string): string {

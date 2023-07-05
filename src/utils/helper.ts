@@ -48,6 +48,8 @@ export function getOrCreateDeposit(id: Bytes): Deposit {
         deposit.treasuryFee = constants.ZERO_BI
         deposit.actualAmountReceived = constants.ZERO_BI
         deposit.newDebt = constants.ZERO_BI
+        deposit.depositTimestamp = constants.ZERO_BI
+        deposit.sweptAt = constants.ZERO_BI
     }
     return deposit
 }
@@ -57,9 +59,10 @@ export function getOrCreateRedemption(id: Bytes): Redemption {
     let redemption = Redemption.load(id)
     if (!redemption) {
         redemption = new Redemption(id)
-        redemption.status = "REQUESTED"
+        redemption.status = "UNKNOWN"
         redemption.amount = constants.ZERO_BI
         redemption.transactions = []
+        redemption.updateTimestamp = constants.ZERO_BI
     }
     return redemption
 }

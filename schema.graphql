@@ -3,12 +3,14 @@ enum DepositStatus {
     REVEALED #-> bridge.revealDeposit() / DepositRevealed event
     MINTING_REQUESTED
     SWEPT # -> bridge.submitDepositSweepProof() / DepositSwept event && bank.increaseBalances() / BalanceIncreased event
-    COMPLETED
+    MINTING_FINALIZED
+    SWEPT_COMPLETED
     CANCELED # -> Guardian cancel , The optimistic minting request for the given deposit exis or The optimistic minting request for the given deposit has not been finalized yet.
-    REFUNDED # -> ???
+    REFUNDED
 }
 
 enum RedemptionStatus {
+    UNKNOWN
     REQUESTED #-> bridge.requestRedemption() / RedemptionRequested event && bank.transferBalanceFrom() / BalanceTransferred event
     COMPLETED #-> bridge.submitRedemptionProof() / RedemptionCompleted event && bank.DecreaseBalance() / BalanceDecreased event && bank.trasferBalance() / BalanceTransferred event
     TIMEDOUT #-> bridge.notifyRedemptionTimeout() / RedemptionTimedOut
@@ -53,6 +55,7 @@ type Deposit @entity {
     refundLocktime: Bytes
     vault: Bytes
     transactions: [Transaction!]!
+    sweptAt: BigInt
     depositTimestamp: BigInt
     updateTimestamp: BigInt
 }
@@ -71,7 +74,7 @@ type Redemption @entity {
     completedTxHash: Bytes
     transactions: [Transaction!]!
     redemptionTimestamp: BigInt
-    updateTimestamp: BigInt
+    updateTimestamp: BigInt!
 }
 
 

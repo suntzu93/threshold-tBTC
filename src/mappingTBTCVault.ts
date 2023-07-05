@@ -18,9 +18,6 @@ import {getIDFromEvent} from "./utils/utils";
 import {
     TBTC
 } from "../generated/TBTC/TBTC"
-import {Treasury} from "./utils/constants";
-import {Bridge} from "../generated/Bridge/Bridge";
-import {User} from "../generated/schema";
 
 export function handleOptimisticMintingCancelled(
     event: OptimisticMintingCancelled
@@ -98,7 +95,7 @@ export function handleOptimisticMintingFinalized(
     transactionEntity.description = "Minting Finalized"
     transactionEntity.save()
 
-    deposit.status = "COMPLETED"
+    deposit.status = "MINTING_FINALIZED"
     deposit.updateTimestamp = event.block.timestamp
     deposit.newDebt = event.params.optimisticMintingDebt
     deposit.actualAmountReceived = amountToMint.minus(optimisticMintFee)
@@ -156,59 +153,59 @@ export function handleMinted(event: Minted): void {
     tBtcToken.save()
 
     //check if the user has swept the deposit
-    if (event.params.to.toHex() != Const.Treasury.toHex()) {
-        let user = getOrCreateUser(event.params.to)
-        if (user) {
-            let deposits = user.deposits
-            if (deposits) {
-                for (let i = 0; i < deposits.length; i++) {
-                    let depositId = deposits[i]
-                    let deposit = getOrCreateDeposit(depositId)
-
-                    // if a user has two deposits in the swept state, it will be necessary to check
-                    // if the deposit on the contract has a sweptAt timestamp that
-                    // is not equal to zero to determine which deposit has just been processed.
-                    if (deposit.status == "SWEPT") {
-                        let bridgeContract = Bridge.bind(Const.BRIDGE_CONTRACT)
-                        let depositsContract = bridgeContract.deposits(Utils.hexToBigint(deposit.id.toHex()))
-                        let sweptAt = depositsContract.sweptAt
-
-                        //if sweptAt != 0 means that this deposit has just been processed.
-                        if (sweptAt.notEqual(Const.ZERO_BI)) {
-                            let transactionEntity = Helper.getOrCreateTransaction(getIDFromEvent(event))
-                            transactionEntity.txHash = event.transaction.hash
-                            transactionEntity.timestamp = event.block.timestamp
-                            transactionEntity.from = event.transaction.from
-                            transactionEntity.to = event.transaction.to
-                            transactionEntity.amount = event.params.amount
-                            transactionEntity.description = "Swept deposit processed successfully."
-                            transactionEntity.save()
-
-                            let transactions = deposit.transactions
-                            transactions.push(transactionEntity.id)
-                            deposit.transactions = transactions
-                            deposit.actualAmountReceived = event.params.amount
-                            deposit.status = "COMPLETED"
-                            deposit.save()
-                        }
-                    }
-                }
-            } else {
-                log.warning("deposits is null", [])
-            }
-        } else {
-            log.warning("user is null", [])
-
-        }
-
-    }
+    // if (event.params.to.toHex() != Const.Treasury.toHex()) {
+    //     let user = getOrCreateUser(event.params.to)
+    //     if (user) {
+    //         let deposits = user.deposits
+    //         if (deposits) {
+    //             for (let i = 0; i < deposits.length; i++) {
+    //                 let depositId = deposits[i]
+    //                 let deposit = getOrCreateDeposit(depositId)
+    //
+    //                 // if a user has two deposits in the swept state, it will be necessary to check
+    //                 // if the deposit on the contract has a sweptAt timestamp that
+    //                 // is not equal to zero to determine which deposit has just been processed.
+    //                 if (deposit.status == "SWEPT") {
+    //                     let bridgeContract = Bridge.bind(Const.BRIDGE_CONTRACT)
+    //                     let depositsContract = bridgeContract.deposits(Utils.hexToBigint(deposit.id.toHex()))
+    //                     let sweptAt = depositsContract.sweptAt
+    //
+    //                     //if sweptAt != 0 means that this deposit has just been processed.
+    //                     if (sweptAt.notEqual(Const.ZERO_BI)) {
+    //                         let transactionEntity = Helper.getOrCreateTransaction(getIDFromEvent(event))
+    //                         transactionEntity.txHash = event.transaction.hash
+    //                         transactionEntity.timestamp = event.block.timestamp
+    //                         transactionEntity.from = event.transaction.from
+    //                         transactionEntity.to = event.transaction.to
+    //                         transactionEntity.amount = event.params.amount
+    //                         transactionEntity.description = "Swept deposit processed successfully."
+    //                         transactionEntity.save()
+    //
+    //                         let transactions = deposit.transactions
+    //                         transactions.push(transactionEntity.id)
+    //                         deposit.transactions = transactions
+    //                         deposit.actualAmountReceived = event.params.amount
+    //                         deposit.status = "SWEPT_COMPLETED"
+    //                         deposit.save()
+    //                     }
+    //                 }
+    //             }
+    //         } else {
+    //             log.warning("deposits is null", [])
+    //         }
+    //     } else {
+    //         log.warning("user is null", [])
+    //
+    //     }
+    //
+    // }
 
 }
 
 export function handlerUnminted(event: Unminted): void {
     let contract = TBTC.bind(Const.TBTCToken)
     let tBtcToken = getOrCreateTbtcToken()
-    tBtcToken.totalBurn = tBtcToken.totalMint.plus(event.params.amount)
+    tBtcToken.totalBurn = tBtcToken.totalBurn.plus(event.params.amount)
     tBtcToken.totalSupply = contract.totalSupply()
     tBtcToken.save()
 }
