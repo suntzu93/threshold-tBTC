@@ -137,7 +137,7 @@ export function processDepositSweepTxInputs(
             transactions.push(transaction.id)
             deposit.transactions = transactions
             deposit.updateTimestamp = processInfo.block.timestamp
-            deposit.status = "SWEPT_COMPLETED"
+            deposit.status = "SWEPT"
             deposit.save()
 
         }

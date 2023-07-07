@@ -4,7 +4,6 @@ enum DepositStatus {
     MINTING_REQUESTED
     SWEPT # -> bridge.submitDepositSweepProof() / DepositSwept event && bank.increaseBalances() / BalanceIncreased event
     MINTING_FINALIZED
-    SWEPT_COMPLETED
     CANCELED # -> Guardian cancel , The optimistic minting request for the given deposit exis or The optimistic minting request for the given deposit has not been finalized yet.
     REFUNDED
 }
