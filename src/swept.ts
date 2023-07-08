@@ -151,9 +151,12 @@ export function processDepositSweepTxInputs(
             let transactions = deposit.transactions
             transactions.push(transaction.id)
             deposit.transactions = transactions
-            deposit.actualAmountReceived = actualAmountReceived
             deposit.updateTimestamp = call.block.timestamp
             deposit.status = "SWEPT"
+
+            if (deposit.actualAmountReceived.equals(Const.ZERO_BI)){
+                deposit.actualAmountReceived = actualAmountReceived
+            }
             deposit.save()
 
         }
