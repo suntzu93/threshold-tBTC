@@ -4,7 +4,7 @@ import * as BitcoinUtils from "./utils/bitcoin_utils";
 import * as Utils from "./utils/utils";
 import {SubmitDepositSweepProofCall} from "../generated/Bridge/Bridge";
 import {
-    getOrCreateDeposit, getOrCreateTransaction
+    getOrCreateDeposit, getOrCreateTransaction, getOrCreateUser, getStatus
 } from "./utils/helper"
 import * as Const from "./utils/constants"
 import {getIDFromCall} from "./utils/utils";
@@ -107,42 +107,58 @@ function parseDepositSweepTxInputAt(
 }
 
 export function processDepositSweepTxInputs(
-    processInfo: SubmitDepositSweepProofCall
+    call: SubmitDepositSweepProofCall
 ): void {
-    const parseSweepTxInputVector = BitcoinUtils.parseVarInt(Utils.bytesToUint8Array(processInfo.inputs.sweepTx.inputVector));
+    const parseSweepTxInputVector = BitcoinUtils.parseVarInt(Utils.bytesToUint8Array(call.inputs.sweepTx.inputVector));
 
     const inputsCompactSizeUintLength = parseSweepTxInputVector.dataLength;
     const inputsCount = parseSweepTxInputVector.number;
 
     let inputStartingIndex = inputsCompactSizeUintLength.plus(BigInt.fromI32(1));
 
+    let status = getStatus();
+    let lastMintedInfo = status.lastMintedInfo
+
     for (let i: i32 = 0; i < inputsCount.toI32(); i++) {
-        let parseDepositSweepTxInput = parseDepositSweepTxInputAt(processInfo.inputs.sweepTx.inputVector, inputStartingIndex);
+        let parseDepositSweepTxInput = parseDepositSweepTxInputAt(call.inputs.sweepTx.inputVector, inputStartingIndex);
 
         const depositKey = Bytes.fromByteArray(Utils.calculateDepositKey(parseDepositSweepTxInput.outpointTxHash, parseDepositSweepTxInput.outpointIndex));
         let deposit = getOrCreateDeposit(depositKey);
         if (deposit.depositTimestamp!.notEqual(Const.ZERO_BI)) {
-            deposit.sweptAt = processInfo.block.timestamp
-
-            let transaction = getOrCreateTransaction(getIDFromCall(processInfo))
-            transaction.txHash = processInfo.transaction.hash
-            transaction.timestamp = processInfo.block.timestamp
-            transaction.from = processInfo.transaction.from
-            transaction.to = processInfo.transaction.to
+            deposit.sweptAt = call.block.timestamp
+            let transaction = getOrCreateTransaction(getIDFromCall(call))
+            transaction.txHash = call.transaction.hash
+            transaction.timestamp = call.block.timestamp
+            transaction.from = call.transaction.from
+            transaction.to = call.transaction.to
             transaction.amount = Const.ZERO_BI
             transaction.description = "Swept by wallet"
             transaction.save()
 
+            let actualAmountReceived: BigInt = Const.ZERO_BI;
+            let user = getOrCreateUser(deposit.user);
+            for (let j: i32 = 0; j < lastMintedInfo.length; j++) {
+                let mintedData = lastMintedInfo[j].split("-");
+                let depositor = mintedData[0];
+                let amount = mintedData[1];
+
+                if (depositor.toLowerCase() == user.id.toHexString().toLowerCase()) {
+                    actualAmountReceived = BigInt.fromString(amount);
+                    break
+                }
+            }
+
             let transactions = deposit.transactions
             transactions.push(transaction.id)
             deposit.transactions = transactions
-            deposit.updateTimestamp = processInfo.block.timestamp
+            deposit.actualAmountReceived = actualAmountReceived
+            deposit.updateTimestamp = call.block.timestamp
             deposit.status = "SWEPT"
             deposit.save()
 
         }
 
-        if (inputStartingIndex.plus(parseDepositSweepTxInput.inputLength).gt(BigInt.fromI32(processInfo.inputs.sweepTx.inputVector.length))) {
+        if (inputStartingIndex.plus(parseDepositSweepTxInput.inputLength).gt(BigInt.fromI32(call.inputs.sweepTx.inputVector.length))) {
             break;
         }
         inputStartingIndex = inputStartingIndex.plus(parseDepositSweepTxInput.inputLength);
