@@ -122,6 +122,8 @@ export function getStatus(): StatusRecord {
         status.groupState = "IDLE"
         status.ecdsaState = "IDLE"
         status.pendingRedemptions = []
+        status.lastMintedInfo = []
+        status.lastMintedHash = Bytes.empty()
     }
     return status as StatusRecord
 }

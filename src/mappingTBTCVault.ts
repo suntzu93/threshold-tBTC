@@ -12,7 +12,7 @@ import {log, Bytes} from "@graphprotocol/graph-ts"
 import * as Helper from "./utils/helper"
 import * as Utils from "./utils/utils"
 import * as Const from "./utils/constants"
-import {getOrCreateDeposit, getOrCreateTbtcToken, getOrCreateUser, getStats} from "./utils/helper";
+import {getOrCreateDeposit, getOrCreateTbtcToken, getOrCreateUser, getStats, getStatus} from "./utils/helper";
 import {getIDFromEvent} from "./utils/utils";
 
 import {
@@ -152,53 +152,27 @@ export function handleMinted(event: Minted): void {
     tBtcToken.totalSupply = contract.totalSupply()
     tBtcToken.save()
 
-    //check if the user has swept the deposit
-    // if (event.params.to.toHex() != Const.Treasury.toHex()) {
-    //     let user = getOrCreateUser(event.params.to)
-    //     if (user) {
-    //         let deposits = user.deposits
-    //         if (deposits) {
-    //             for (let i = 0; i < deposits.length; i++) {
-    //                 let depositId = deposits[i]
-    //                 let deposit = getOrCreateDeposit(depositId)
-    //
-    //                 // if a user has two deposits in the swept state, it will be necessary to check
-    //                 // if the deposit on the contract has a sweptAt timestamp that
-    //                 // is not equal to zero to determine which deposit has just been processed.
-    //                 if (deposit.status == "SWEPT") {
-    //                     let bridgeContract = Bridge.bind(Const.BRIDGE_CONTRACT)
-    //                     let depositsContract = bridgeContract.deposits(Utils.hexToBigint(deposit.id.toHex()))
-    //                     let sweptAt = depositsContract.sweptAt
-    //
-    //                     //if sweptAt != 0 means that this deposit has just been processed.
-    //                     if (sweptAt.notEqual(Const.ZERO_BI)) {
-    //                         let transactionEntity = Helper.getOrCreateTransaction(getIDFromEvent(event))
-    //                         transactionEntity.txHash = event.transaction.hash
-    //                         transactionEntity.timestamp = event.block.timestamp
-    //                         transactionEntity.from = event.transaction.from
-    //                         transactionEntity.to = event.transaction.to
-    //                         transactionEntity.amount = event.params.amount
-    //                         transactionEntity.description = "Swept deposit processed successfully."
-    //                         transactionEntity.save()
-    //
-    //                         let transactions = deposit.transactions
-    //                         transactions.push(transactionEntity.id)
-    //                         deposit.transactions = transactions
-    //                         deposit.actualAmountReceived = event.params.amount
-    //                         deposit.status = "SWEPT_COMPLETED"
-    //                         deposit.save()
-    //                     }
-    //                 }
-    //             }
-    //         } else {
-    //             log.warning("deposits is null", [])
-    //         }
-    //     } else {
-    //         log.warning("user is null", [])
-    //
-    //     }
-    //
-    // }
+    //Reset lastMintedInfo when handle diff transaction
+    let status = getStatus()
+    if (status.lastMintedHash.toHexString().toLowerCase() !== event.transaction.hash.toHexString().toLowerCase()) {
+        if (status.lastMintedInfo.length > 0) {
+            status.lastMintedInfo = []
+            status.save()
+        }
+    }
+
+    // Update actualAmountReceived in case tBTC mint
+    // happening under the hood given that sweeping can also result in minting if, for the given revealed deposit, minters did not mint tBTC
+    if (event.params.amount.gt(Const.ZERO_BI)) {
+        let userDepositAmount = event.params.to.toHexString().concat("-").concat(event.params.amount.toString())
+        let lastMintedInfo: Array<string> = []
+        lastMintedInfo.push(userDepositAmount)
+
+        let status = getStatus()
+        status.lastMintedInfo = lastMintedInfo
+        status.lastMintedHash = event.transaction.hash
+        status.save()
+    }
 
 }
 

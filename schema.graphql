@@ -277,4 +277,6 @@ type StatusRecord @entity {
     reason: String
 
     pendingRedemptions: [Bytes!]!
+    lastMintedInfo: [String!]!
+    lastMintedHash: Bytes!
 }
