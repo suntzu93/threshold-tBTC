@@ -24,28 +24,26 @@ export function calculateDepositKey(
 }
 
 /**
- * keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash)
+ * keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash) + "-" + count
  * */
-export function calculateRedemptionKey(redeemerOutputScript: ByteArray, walletPublicKeyHash: ByteArray): ByteArray {
+export function calculateRedemptionKey(redeemerOutputScript: ByteArray, walletPublicKeyHash: ByteArray, count: BigInt): string {
     let scriptHashArray = crypto.keccak256(redeemerOutputScript);
     let data = new Uint8Array(scriptHashArray.length + walletPublicKeyHash.length);
     data.set(scriptHashArray, 0);
     data.set(walletPublicKeyHash, scriptHashArray.length);
 
-    return crypto.keccak256(Bytes.fromUint8Array(data));
+    return crypto.keccak256(Bytes.fromUint8Array(data)).toHexString().concat("-").concat(count.toString());
 }
 
 /**
- * The key = keccak256(scriptHash | walletPubKeyHash).
- * @param scriptHash
- * @param walletPublicKeyHash
+ * The key = keccak256(scriptHash | walletPubKeyHash) + "-" + count
  */
-export function calculateRedemptionKeyByScriptHash(scriptHash: ByteArray, walletPublicKeyHash: ByteArray): ByteArray {
+export function calculateRedemptionKeyByScriptHash(scriptHash: ByteArray, walletPublicKeyHash: ByteArray, count: BigInt): string {
     let data = new Uint8Array(scriptHash.length + walletPublicKeyHash.length);
     data.set(scriptHash, 0);
     data.set(walletPublicKeyHash, scriptHash.length);
 
-    return crypto.keccak256(Bytes.fromUint8Array(data));
+    return crypto.keccak256(Bytes.fromUint8Array(data)).toHexString().concat("-").concat(count.toString());
 }
 
 export function keccak256TwoString(first: string, second: string): string {
@@ -149,7 +147,7 @@ export function removeItem<T>(data: Array<T>, item: T): Array<T> {
         // Item not found, return the original array
         return data;
     }
-    
+
     // Remove the item using splice()
     data.splice(index, 1);
     return data;

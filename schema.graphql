@@ -15,6 +15,14 @@ enum RedemptionStatus {
     TIMEDOUT #-> bridge.notifyRedemptionTimeout() / RedemptionTimedOut
 }
 
+type _Schema_
+@fulltext(
+    name: "searchRedemption"
+    language: en
+    algorithm: rank
+    include: [{ entity: "Redemption", fields: [{ name: "id" }] }]
+)
+
 type Transaction @entity {
     id: ID!
     txHash: Bytes!
@@ -60,8 +68,8 @@ type Deposit @entity {
 }
 
 type Redemption @entity {
-    #keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash)
-    id: Bytes!
+    #keccak256(keccak256(redeemerOutputScript) | walletPubKeyHash) + "-" + count
+    id: ID!
     status: RedemptionStatus
     user: User!
     amount: BigInt!

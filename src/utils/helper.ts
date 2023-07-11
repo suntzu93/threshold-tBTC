@@ -55,7 +55,7 @@ export function getOrCreateDeposit(id: Bytes): Deposit {
 }
 
 
-export function getOrCreateRedemption(id: Bytes): Redemption {
+export function getOrCreateRedemption(id: string): Redemption {
     let redemption = Redemption.load(id)
     if (!redemption) {
         redemption = new Redemption(id)
